@@ -1,0 +1,370 @@
+/* ==========================================================================================================
+   COMPONENTS: the parts every app is built from. Same class names in every app.
+   Needs tokens.css. Contents:
+     1. Buttons            .btn  .iconbtn  .menubtn  .winbtn
+     2. Form controls      .field  .toggle  .segmented  .searchbox  (plain inputs live in base.css)
+     3. Labels             .pill  .chip  .badge  .section
+     4. Windows            .scrim (+ sheet)  .dialog  .settings   <- every settings window uses this
+     5. Menus and popups   .menu  .popover  .toast  .tip
+     6. App frame          .titlebar  .tabbar / .tab  .toolbar / .tb  .statusbar  .navbtn
+     7. Content            .card  .empty  .notice  .progress  .spinner
+     8. Helpers            .grow  .muted  .hint  .stack  .cluster
+     9. Code               .syn-*  pre.code (code boxes with a language label)
+    10. Phone parts        .fab  .bottomnav  (and a .menu inside a .scrim.sheet)
+    11. Theme picker       .themepick  .themegrid  .themecard   <- every app's Settings > Look uses this
+   ========================================================================================================== */
+
+/* ---- 1. Buttons ---------------------------------------------------------------------------------------- */
+/* .btn is the normal button. Add ONE of: primary (the main action, one per screen), soft, ghost, danger, link.
+   Sizes: small, large. Shape: pill. */
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: var(--h-btn); padding: 0 14px; border: 1px solid var(--line-soft); border-radius: var(--r-md); background: color-mix(in srgb, var(--surface) 50%, transparent); color: var(--ink); font-weight: var(--fw-medium); white-space: nowrap; text-decoration: none; user-select: none; transition: background var(--dur-1) var(--ease), border-color var(--dur-1) var(--ease), color var(--dur-1) var(--ease), transform var(--dur-1) var(--ease), box-shadow var(--dur-1) var(--ease); }
+.btn:hover { background: var(--surface); border-color: var(--line); }
+.btn:active { background: var(--pressed); transform: scale(0.98); }
+.btn .icon { width: 16px; height: 16px; }
+.btn.primary { border-color: transparent; background: var(--accent); color: var(--accent-ink); font-weight: var(--fw-bold); }
+.btn.primary:hover { background: var(--accent-hover); border-color: transparent; }
+.btn.primary:active { background: var(--accent); }
+.btn.soft { border-color: transparent; background: var(--accent-soft); color: var(--accent); }
+.btn.soft:hover { background: color-mix(in srgb, var(--accent) 26%, var(--panel)); border-color: transparent; }
+.btn.ghost { border-color: transparent; background: transparent; color: var(--muted); }
+.btn.ghost:hover { background: var(--hover); color: var(--ink); border-color: transparent; }
+.btn.danger { border-color: transparent; background: var(--err-soft); color: var(--err); }
+.btn.danger:hover { background: var(--err); color: var(--accent-ink); border-color: transparent; }
+.btn.small { min-height: var(--h-sm); padding: 0 10px; border-radius: var(--r-sm); font-size: var(--fs-xs); }
+.btn.small .icon { width: 14px; height: 14px; }
+.btn.large { min-height: var(--h-lg); padding: 0 18px; font-size: var(--fs-md); }
+.btn.pill { border-radius: var(--r-pill); }
+/* Link-style button: plain accent words, no box. For small actions inside text or a row ("Change", "Show all"). */
+.btn.link { min-height: var(--h-sm); padding: 0 4px; border-color: transparent; background: transparent; color: var(--accent); font-weight: var(--fw-bold); }
+.btn.link:hover { border-color: transparent; background: transparent; text-decoration: underline; text-underline-offset: 3px; }
+.btn.link:active { background: transparent; transform: none; opacity: 0.8; }
+.btn.glow { box-shadow: 0 6px 18px color-mix(in srgb, var(--accent) 25%, transparent); } /* for the ONE big call to action */
+.btn:disabled, .btn[aria-disabled='true'] { opacity: 0.5; pointer-events: none; }
+
+/* Square button that holds only an icon (toolbars, title bars, close buttons). */
+.iconbtn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-width: var(--h-md); height: var(--h-md); padding: 0 7px; border: 0; border-radius: var(--r-md); background: transparent; color: var(--muted); transition: background var(--dur-1) var(--ease), color var(--dur-1) var(--ease); }
+.iconbtn:hover { background: var(--surface); color: var(--ink); }
+.iconbtn:active { background: var(--pressed); }
+.iconbtn.on { background: var(--accent-soft); color: var(--accent); }
+.iconbtn.danger:hover { background: var(--err-soft); color: var(--err); }
+.iconbtn.small { min-width: var(--h-xs); height: var(--h-xs); padding: 0; border-radius: var(--r-sm); }
+
+/* Text button in a menu bar (File, Edit, View). */
+.menubtn { height: var(--h-row); padding: 0 9px; border: 0; border-radius: var(--r-md); background: transparent; color: var(--muted); font-weight: var(--fw-medium); transition: background var(--dur-1) var(--ease), color var(--dur-1) var(--ease); }
+.menubtn:hover, .menubtn.on { background: var(--surface); color: var(--ink); }
+
+/* ---- 2. Form controls ---------------------------------------------------------------------------------- */
+/* A settings row: name (and a hint under it) on the left, the control on the right. */
+.field { display: flex; align-items: center; gap: 12px; min-height: var(--h-field); padding: 7px 0; border-bottom: 1px solid var(--line-soft); }
+.field:last-child { border-bottom: 0; }
+.field label:not(.toggle), .field .flabel { flex: 1; min-width: 0; }
+.field .hint { margin-top: 2px; line-height: 1.4; }
+.field select, .field input[type=text], .field input[type=password], .field input[type=number], .field input[type=email] { height: var(--h-md); min-width: 200px; background: var(--field); border-radius: var(--r-md); }
+.fieldlabel { margin-top: 6px; font-size: var(--fs-xs); font-weight: var(--fw-bold); color: var(--muted); }
+
+/* On / off switch:  <label class="toggle"><input type="checkbox"><span></span></label> */
+.toggle { position: relative; display: inline-block; width: var(--sw-w); height: var(--sw-h); flex: none; }
+.toggle input { position: absolute; opacity: 0; width: 0; height: 0; }
+.toggle span { position: absolute; inset: 0; border-radius: var(--r-pill); background: var(--line); cursor: pointer; transition: background var(--dur-2) var(--ease); }
+.toggle span::after { content: ''; position: absolute; left: 3px; top: 3px; width: calc(var(--sw-h) - 6px); height: calc(var(--sw-h) - 6px); border-radius: 50%; background: var(--ink); box-shadow: var(--shadow-1); transition: transform var(--dur-2) var(--ease), background var(--dur-2) var(--ease); }
+.toggle:hover span { background: var(--surface-2); }
+.toggle input:checked + span { background: var(--accent); }
+.toggle input:checked + span::after { transform: translateX(calc(var(--sw-w) - var(--sw-h))); background: var(--accent-ink); }
+.toggle input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 2px; }
+.toggle input:disabled + span { opacity: 0.5; cursor: default; }
+
+/* Pick one of a few:  <div class="segmented"><button class="on">A</button><button>B</button></div> */
+.segmented { display: inline-flex; gap: 2px; padding: 3px; border: 1px solid var(--line-soft); border-radius: var(--r-md); background: var(--well); }
+.segmented button { display: inline-flex; align-items: center; justify-content: center; gap: 5px; flex: 1; height: var(--h-seg); padding: 0 10px; border: 0; border-radius: calc(var(--r-md) - 3px); background: transparent; color: var(--muted); font-size: var(--fs-xs); font-weight: var(--fw-bold); transition: background var(--dur-1) var(--ease), color var(--dur-1) var(--ease); }
+.segmented button .icon { width: 14px; height: 14px; }
+.segmented button:hover { color: var(--ink); }
+.segmented button.on { background: var(--surface); color: var(--ink); box-shadow: var(--shadow-1); }
+.segmented.pill, .segmented.pill button { border-radius: var(--r-pill); }
+
+/* Search pill:  <div class="searchbox"><svg class="icon"/><input class="bare"/></div> */
+.searchbox { display: flex; align-items: center; gap: 6px; height: var(--h-search); padding: 0 4px 0 10px; border: 1px solid var(--line-soft); border-radius: var(--r-pill); background: var(--field); transition: border-color var(--dur-1) var(--ease), box-shadow var(--dur-1) var(--ease); }
+.searchbox:hover { border-color: var(--line); }
+.searchbox:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent); }
+.searchbox .icon { width: 16px; height: 16px; color: var(--muted); }
+.searchbox input { flex: 1; min-width: 0; height: 100%; padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; outline: none; user-select: text; }
+.searchbox .iconbtn { min-width: 24px; height: 24px; padding: 0; border-radius: var(--r-pill); }
+
+/* ---- 3. Labels ----------------------------------------------------------------------------------------- */
+/* .pill = a small status word. Colors: ok, warn, err, info, accent. */
+.pill { display: inline-flex; align-items: center; gap: 4px; padding: 1px 8px; border-radius: var(--r-pill); background: var(--surface); color: var(--muted); font-size: var(--fs-2xs); font-weight: var(--fw-bold); white-space: nowrap; }
+.pill.on, .pill.ok { background: var(--ok-soft); color: var(--ok); }
+.pill.warn { background: var(--warn-soft); color: var(--warn); }
+.pill.err { background: var(--err-soft); color: var(--err); }
+.pill.info { background: var(--info-soft); color: var(--info); }
+.pill.accent { background: var(--accent-soft); color: var(--accent); }
+
+/* .chip = a tag you can click or remove. Set its color with style="color: var(--blue)". */
+.chip { display: inline-flex; align-items: center; gap: 4px; height: 24px; padding: 0 4px 0 8px; border: 1px solid; border-radius: var(--r-pill); font-size: var(--fs-xs); font-weight: var(--fw-bold); white-space: nowrap; cursor: pointer; }
+.chip .icon { width: 12px; height: 12px; }
+.chip button { display: grid; place-items: center; width: 18px; height: 18px; border: 0; border-radius: 50%; background: transparent; color: inherit; opacity: 0.6; }
+.chip button:hover { opacity: 1; background: color-mix(in srgb, currentColor 20%, transparent); }
+.chip.small { height: 20px; padding: 0 6px; font-size: var(--fs-2xs); }
+
+/* .badge = a count on top of something. */
+.badge { display: inline-grid; place-items: center; min-width: 18px; height: 18px; padding: 0 5px; border-radius: var(--r-pill); background: var(--peach); color: var(--accent-ink); font-size: var(--fs-2xs); font-weight: 700; }
+
+/* Small all-caps heading above a group. */
+.section { display: flex; align-items: center; margin: 14px 0 4px; padding: 0 9px; color: var(--overlay); font-size: var(--fs-2xs); font-weight: var(--fw-bold); letter-spacing: 0.06em; text-transform: uppercase; }
+
+/* ---- 4. Windows: dialogs and settings ------------------------------------------------------------------ */
+/* <div class="scrim"><div class="dialog"><header>Title<span class="grow"/><button class="iconbtn">x</button></header>
+     <div class="bodypad">...</div><footer><span class="grow"/><button class="btn">Cancel</button><button class="btn primary">Save</button></footer></div></div> */
+.scrim { position: fixed; inset: 0; z-index: var(--z-modal); display: flex; align-items: flex-start; justify-content: center; padding-top: 12vh; background: var(--scrim); animation: theme-scrim var(--dur-1) var(--ease); }
+.scrim.center { align-items: center; padding-top: 0; }
+.dialog { width: min(560px, 92vw); max-height: 86vh; display: flex; flex-direction: column; overflow: hidden; border: 1px solid var(--line); border-radius: var(--r-xl); background: var(--panel); box-shadow: var(--shadow), var(--sheen); animation: theme-pop var(--dur-1) var(--ease); }
+.dialog > * { flex-shrink: 0; }
+.dialog > .bodypad, .dialog > .cols { flex-shrink: 1; min-height: 0; }
+.dialog > header { display: flex; align-items: center; gap: 8px; min-height: 50px; padding: 9px 10px 9px 18px; border-bottom: 1px solid var(--line-soft); font-size: var(--fs-md); font-weight: var(--fw-bold); flex: none; }
+.dialog > footer { display: flex; align-items: center; gap: 8px; padding: 12px 14px; border-top: 1px solid var(--line-soft); color: var(--muted); font-size: var(--fs-xs); flex: none; }
+.dialog header .grow, .dialog footer .grow { flex: 1; }
+.dialog .bodypad { padding: 16px 18px; overflow-y: auto; min-height: 0; }
+.dialog.wide { width: min(820px, 94vw); }
+.dialog.narrow { width: min(420px, 92vw); }
+
+/* Settings window: a list of sections on the left, rows of .field on the right. Same in every app.
+   <div class="dialog settings"><header>Settings ...</header>
+     <div class="cols"><nav><button class="navbtn on">Look</button>...</nav><div class="setpane"><h3>Look</h3><div class="field">...</div></div></div></div> */
+.settings { width: min(820px, 94vw); }
+.settings .cols { display: grid; grid-template-columns: 190px 1fr; flex: 1 1 auto; min-height: 0; }
+.settings nav { display: flex; flex-direction: column; gap: 2px; padding: 10px 8px; border-right: 1px solid var(--line-soft); background: color-mix(in srgb, var(--ground) 45%, transparent); overflow-y: auto; }
+.settings .setpane { display: flex; flex-direction: column; height: min(66vh, 600px); padding: 18px 22px 22px; overflow-y: auto; } /* one fixed size, so the window never jumps between sections */
+.settings .setpane > * { flex: none; }
+.settings h3 { margin: 0 0 10px; font-size: var(--fs-lg); font-weight: var(--fw-bold); }
+.settings h4 { margin: 18px 0 2px; color: var(--overlay); font-size: var(--fs-2xs); font-weight: var(--fw-bold); letter-spacing: 0.06em; text-transform: uppercase; }
+
+/* Narrow windows and phones: dialogs fill the width, the settings list turns into a strip along the top,
+   and a row's control drops under its name when both don't fit on one line. */
+@media (max-width: 640px) {
+  .scrim { padding: max(10px, env(safe-area-inset-top)) 10px 10px; }
+  .dialog, .dialog.wide, .settings { width: 100%; max-height: calc(100dvh - 20px); }
+  .settings .cols { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); }
+  .settings nav { flex-direction: row; gap: 4px; padding: 6px 8px; border-right: 0; border-bottom: 1px solid var(--line-soft); overflow-x: auto; scrollbar-width: none; }
+  .settings nav .navbtn { width: auto; flex: none; white-space: nowrap; }
+  .settings .setpane { height: 72dvh; padding: 14px 16px 18px; }
+  .field { flex-wrap: wrap; row-gap: 6px; }
+  .field label:not(.toggle), .field .flabel { flex: 1 1 180px; }
+  .field select, .field input[type=text], .field input[type=password], .field input[type=number], .field input[type=email] { flex: 1 1 100%; min-width: 0; }
+}
+
+/* Bottom sheet: on a phone, a dialog that slides up from the bottom edge instead of floating. On a wide window it is a
+   normal centered dialog. Add `sheet` to the scrim:  <div class="scrim sheet"><div class="dialog">...</div></div> */
+.scrim.sheet { align-items: center; padding-top: 0; }
+@media (max-width: 640px) {
+  .scrim.sheet { align-items: flex-end; padding: max(10px, env(safe-area-inset-top)) 0 0; }
+  .scrim.sheet > .dialog { width: 100%; max-height: 100%; padding-bottom: env(safe-area-inset-bottom); border-width: 1px 0 0; border-radius: var(--r-xl) var(--r-xl) 0 0; animation: theme-sheet var(--dur-3) var(--ease); }
+  .scrim.sheet > .dialog::before { content: ''; flex: none; width: 36px; height: 4px; margin: 8px auto 0; border-radius: var(--r-pill); background: var(--line); }
+}
+
+/* A boxed item inside settings (a plugin, an account, a download). */
+.plugin, .setcard { display: flex; align-items: flex-start; gap: 12px; padding: 12px 14px; margin-bottom: 10px; border: 1px solid var(--line-soft); border-radius: var(--r-lg); background: color-mix(in srgb, var(--surface) 22%, transparent); }
+.plugin .ptitle, .setcard .ptitle { font-weight: var(--fw-bold); }
+.plugin .grow, .setcard .grow { flex: 1; min-width: 0; }
+
+/* Command bar (Ctrl+K): <div class="dialog palette"><input/><ul><li class="on">...</li></ul></div> */
+.palette input { width: 100%; height: 50px; padding: 0 18px; border: 0; border-bottom: 1px solid var(--line-soft); border-radius: 0; background: transparent; box-shadow: none; font-size: var(--fs-lg); outline: none; flex: none; }
+.palette ul { list-style: none; margin: 0; padding: 6px; max-height: 50vh; overflow-y: auto; }
+.palette li { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: var(--r-md); cursor: pointer; }
+.palette li:hover { background: var(--hover); }
+.palette li.on { background: var(--accent-soft); }
+.palette li .hint { margin-left: auto; color: var(--muted); font-size: var(--fs-xs); }
+
+/* ---- 5. Menus and popups ------------------------------------------------------------------------------- */
+/* <div class="menu"><button><svg class="icon"/>Rename<span class="hint">F2</span></button><hr/><button class="danger">Delete</button></div> */
+.menu, .popover { position: fixed; z-index: var(--z-pop); min-width: 200px; max-height: calc(100vh - 16px); padding: 5px; overflow-y: auto; border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--panel); box-shadow: var(--shadow-3), var(--sheen); font-size: var(--fs-sm); animation: theme-fade var(--dur-1) var(--ease); }
+.popover { padding: 12px; }
+.menu button { display: flex; align-items: center; gap: 10px; width: 100%; height: var(--h-row); padding: 0 10px; border: 0; border-radius: calc(var(--r-lg) - 5px); background: transparent; text-align: left; white-space: nowrap; }
+.menu button:hover, .menu button.on { background: var(--surface); }
+.menu button.danger { color: var(--err); }
+.menu button.danger:hover { background: var(--err-soft); }
+.menu .icon { width: 16px; height: 16px; color: var(--muted); }
+.menu button.danger .icon { color: inherit; }
+.menu .hint { margin-left: auto; padding-left: 16px; color: var(--overlay); font-size: var(--fs-xs); }
+.menu hr { margin: 4px 6px; border: 0; border-top: 1px solid var(--line-soft); }
+.menu .label { padding: 6px 10px 2px; color: var(--overlay); font-size: var(--fs-2xs); font-weight: var(--fw-bold); letter-spacing: 0.06em; text-transform: uppercase; }
+
+/* Short message at the bottom of the window. */
+.toast { position: fixed; left: 50%; bottom: 44px; z-index: var(--z-toast); transform: translateX(-50%); padding: 9px 16px; border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--surface); box-shadow: var(--shadow-3), var(--sheen); animation: theme-toast var(--dur-2) var(--ease); }
+
+/* Tooltip:  <button data-tip="Save">  (shows above the button) */
+[data-tip] { position: relative; }
+[data-tip]:hover::after { content: attr(data-tip); position: absolute; left: 50%; bottom: calc(100% + 6px); z-index: var(--z-toast); transform: translateX(-50%); padding: 4px 8px; border: 1px solid var(--line); border-radius: var(--r-sm); background: var(--crust); color: var(--ink); font-size: var(--fs-xs); font-weight: var(--fw-medium); white-space: nowrap; pointer-events: none; box-shadow: var(--shadow-2); animation: theme-fade var(--dur-1) var(--ease) 350ms backwards; }
+
+@keyframes theme-pop { from { opacity: 0; transform: translateY(8px) scale(0.985); } }
+@keyframes theme-sheet { from { transform: translateY(100%); } }
+@keyframes theme-fade { from { opacity: 0; } }
+@keyframes theme-scrim { from { background-color: transparent; } }
+@keyframes theme-toast { from { opacity: 0; transform: translate(-50%, 8px); } }
+@keyframes theme-spin { to { transform: rotate(360deg); } }
+/* Reduce Motion: no movement. The scrim keeps a 1 ms fade on purpose: its start is how dialog-keys finds a new dialog. */
+@media (prefers-reduced-motion: reduce) { .dialog, .menu, .popover, .toast, [data-tip]::after { animation: none; } .scrim { animation-duration: 1ms; } .btn:active { transform: none; } }
+/* A dialog that got the cursor from dialog-keys shows no ring around the whole window. */
+.dialog:focus { outline: none; }
+
+/* ---- 6. App frame -------------------------------------------------------------------------------------- */
+/* Custom title bar (Tauri / Electron windows with no system frame). */
+.titlebar { display: flex; align-items: center; gap: 4px; height: 44px; padding: 0 6px 0 10px; flex: none; }
+.titlebar .drag { flex: 1; align-self: stretch; }
+.titlebar .title { max-width: 40vw; overflow: hidden; color: var(--muted); font-weight: var(--fw-medium); white-space: nowrap; text-overflow: ellipsis; }
+.brand { display: flex; align-items: center; gap: 8px; padding: 0 6px; font-size: calc(15px * var(--tx, 1)); font-weight: var(--fw-bold); }
+.winbtn { display: grid; place-items: center; width: 40px; height: 32px; border: 0; border-radius: var(--r-md); background: transparent; color: var(--muted); transition: background var(--dur-1) var(--ease), color var(--dur-1) var(--ease); }
+.winbtn:hover { background: var(--surface); color: var(--ink); }
+.winbtn.close:hover { background: var(--red); color: var(--accent-ink); }
+
+/* Tabs: soft pills. The picked tab lifts a little. */
+.tabbar { display: flex; align-items: center; gap: 4px; height: 46px; padding: 6px 8px; flex: none; border-bottom: 1px solid var(--line-soft); background: color-mix(in srgb, var(--ground) 45%, transparent); }
+.tabs { display: flex; align-items: center; gap: 4px; flex: 1; min-width: 0; overflow-x: auto; scrollbar-width: none; }
+.tab { display: flex; align-items: center; gap: 7px; height: 34px; min-width: 90px; max-width: 220px; padding: 0 6px 0 13px; border: 0; border-radius: var(--r-md); background: transparent; color: var(--muted); white-space: nowrap; cursor: pointer; transition: background var(--dur-1) var(--ease), color var(--dur-1) var(--ease); }
+.tab:hover { background: var(--hover); color: var(--ink); }
+.tab.on { background: var(--surface); color: var(--ink); box-shadow: var(--sheen), var(--shadow-2); }
+.tab .icon { width: 15px; height: 15px; }
+
+/* Toolbar: a row of .tb buttons with .sep lines between groups. */
+.toolbar { display: flex; align-items: center; flex-wrap: wrap; gap: 3px; padding: 8px 10px; flex: none; border-bottom: 1px solid var(--line-soft); }
+.toolbar .sep { width: 1px; height: 20px; margin: 0 6px; background: var(--line-soft); }
+.toolbar .grow { flex: 1; }
+.toolbar .tb { display: inline-flex; align-items: center; justify-content: center; gap: 5px; min-width: var(--h-md); height: var(--h-md); padding: 0 6px; border: 0; border-radius: var(--r-md); background: transparent; color: var(--muted); font-weight: var(--fw-medium); transition: background var(--dur-1) var(--ease), color var(--dur-1) var(--ease); }
+.toolbar .tb:hover { background: var(--surface); color: var(--ink); }
+.toolbar .tb:active { background: var(--pressed); }
+.toolbar .tb.on { background: var(--accent-soft); color: var(--accent); }
+.toolbar .tb.primary { padding: 0 14px; background: var(--accent); color: var(--accent-ink); font-weight: var(--fw-bold); }
+.toolbar .tb.primary:hover { background: var(--accent-hover); }
+.toolbar select { height: var(--h-md); max-width: 150px; padding: 0 8px; border: 1px solid var(--line-soft); border-radius: var(--r-md); background-color: var(--field); }
+
+/* Thin bar at the bottom of a window. */
+.statusbar { display: flex; align-items: center; gap: 16px; height: 28px; padding: 0 12px; flex: none; border-top: 1px solid var(--line-soft); color: var(--muted); font-size: var(--fs-xs); }
+.statusbar .grow { flex: 1; }
+.statusbar .saved { color: var(--ok); }
+.statusbar .dirty { color: var(--warn); }
+
+/* A row in a side menu or a settings list. */
+.navbtn { display: flex; align-items: center; gap: 10px; width: 100%; min-height: var(--h-nav); padding: 0 10px; border: 0; border-radius: var(--r-md); background: transparent; color: var(--ink); font-weight: var(--fw-medium); text-align: left; transition: background var(--dur-1) var(--ease); }
+.navbtn:hover { background: var(--hover); }
+.navbtn.on { background: var(--accent-soft); }
+.navbtn .icon { color: var(--muted); }
+.navbtn.on .icon { color: var(--accent); }
+.navbtn .count { margin-left: auto; color: var(--muted); font-size: var(--fs-xs); }
+
+/* ---- 7. Content ---------------------------------------------------------------------------------------- */
+.card { padding: 14px 16px; border: 1px solid var(--line-soft); border-radius: var(--r-lg); background: color-mix(in srgb, var(--surface) 28%, transparent); }
+.card.hover:hover { border-color: var(--accent-line); }
+.card.raised { background: var(--panel); box-shadow: var(--shadow-2), var(--sheen); }
+
+/* Controls inside a table cell stay quiet until you point at them, so a table reads as a table, not a wall of boxes. */
+td :is(select, input[type=text], input[type=date], input[type=number], input:not([type])) { height: var(--h-sm); border-color: transparent; background-color: transparent; }
+td :is(select, input[type=text], input[type=date], input[type=number], input:not([type])):hover { border-color: var(--line); }
+td :is(select, input[type=text], input[type=date], input[type=number], input:not([type])):focus { border-color: var(--accent); background-color: var(--field); }
+
+.empty { display: grid; place-items: center; height: 100%; padding: 40px; color: var(--muted); text-align: center; }
+.empty h2 { margin: 10px 0 6px; color: var(--ink); font-weight: var(--fw-bold); }
+
+/* A note box. Colors: ok, warn, err (plain = info). */
+.notice { display: flex; gap: 10px; padding: 10px 12px; border: 1px solid color-mix(in srgb, var(--info) 35%, transparent); border-radius: var(--r-md); background: var(--info-soft); }
+.notice.ok { border-color: color-mix(in srgb, var(--ok) 35%, transparent); background: var(--ok-soft); }
+.notice.warn { border-color: color-mix(in srgb, var(--warn) 35%, transparent); background: var(--warn-soft); }
+.notice.err { border-color: color-mix(in srgb, var(--err) 35%, transparent); background: var(--err-soft); }
+
+/* <div class="progress"><i style="width: 40%"></i></div> */
+.progress { height: 6px; overflow: hidden; border-radius: var(--r-pill); background: var(--line); }
+.progress > i { display: block; height: 100%; border-radius: inherit; background: var(--accent); transition: width var(--dur-3) var(--ease); }
+.spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid var(--line); border-top-color: var(--accent); border-radius: 50%; animation: theme-spin 0.8s linear infinite; }
+
+/* ---- 8. Helpers ---------------------------------------------------------------------------------------- */
+.grow { flex: 1; }
+.muted, .hint { color: var(--muted); font-size: var(--fs-xs); }
+.stack { display: flex; flex-direction: column; gap: var(--sp-3); }
+.cluster { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-2); }
+
+/* ---- 9. Code ------------------------------------------------------------------------------------------- */
+/* Syntax colors. Drift's highlighter (src/editors/codeTheme.ts) puts these classes on code; any app can reuse them. */
+.syn-keyword { color: var(--syn-keyword); }
+.syn-string { color: var(--syn-string); }
+.syn-escape { color: var(--syn-escape); }
+.syn-comment { color: var(--syn-comment); font-style: italic; }
+.syn-number { color: var(--syn-number); }
+.syn-type { color: var(--syn-type); }
+.syn-function { color: var(--syn-function); }
+.syn-property { color: var(--syn-property); }
+.syn-variable { color: var(--syn-variable); }
+.syn-builtin { color: var(--syn-builtin); }
+.syn-operator { color: var(--syn-operator); }
+.syn-punct { color: var(--syn-punct); }
+.syn-tag { color: var(--syn-tag); }
+.syn-attr { color: var(--syn-attr); }
+.syn-meta { color: var(--syn-meta); }
+.syn-added { color: var(--syn-added); }
+.syn-removed { color: var(--syn-removed); }
+.syn-heading { color: var(--syn-keyword); font-weight: var(--fw-bold); }
+.syn-strong { font-weight: var(--fw-bold); }
+.syn-em { font-style: italic; }
+.syn-link { color: var(--blue); text-decoration: underline; }
+.syn-invalid { color: var(--err); text-decoration: underline wavy; }
+
+/* A code box:  <pre class="code" data-lang="python"><code>...</code></pre>  (the label shows top right) */
+pre.code { position: relative; margin: 0.8em 0; padding: 14px 16px; overflow-x: auto; border: 1px solid var(--line-soft); border-radius: var(--r-md); background: var(--code-bg); color: var(--ink); font: var(--fw-medium) 0.88em/1.6 var(--font-mono); tab-size: 4; }
+pre.code code { font: inherit; background: none; padding: 0; }
+pre.code[data-lang]:not([data-lang=''])::before { content: attr(data-lang); position: absolute; top: 6px; right: 10px; color: var(--overlay); font: var(--fw-bold) 10px var(--font-ui); letter-spacing: 0.06em; text-transform: uppercase; }
+
+/* ---- 10. Phone parts ----------------------------------------------------------------------------------- */
+/* A .menu inside a bottom sheet (.scrim.sheet, section 4) becomes an action sheet: full width, no box, tall rows. */
+.sheet .menu { position: static; min-width: 0; max-height: none; padding: 6px; border: 0; border-radius: 0; background: transparent; box-shadow: none; font-size: var(--fs-md); animation: none; }
+.sheet .menu button { height: max(var(--h-row), 44px); }
+
+/* Floating action button: the one round "add" button that floats over a list.
+   <button class="fab" aria-label="Add"><svg class="icon"/></button>   Move it with --fab-right / --fab-bottom. */
+.fab { position: fixed; right: var(--fab-right, 20px); bottom: var(--fab-bottom, calc(env(safe-area-inset-bottom, 0px) + 20px)); z-index: var(--z-sticky); display: grid; place-items: center; width: var(--h-fab); height: var(--h-fab); padding: 0; border: 0; border-radius: 50%; background: var(--accent); color: var(--accent-ink); box-shadow: var(--shadow-2), var(--sheen); transition: background var(--dur-1) var(--ease), transform var(--dur-1) var(--ease); }
+.fab:hover { background: var(--accent-hover); }
+.fab:active { transform: scale(0.95); }
+.fab .icon { width: 24px; height: 24px; }
+
+/* Bottom nav bar for phones: floats above the home bar. The picked button shows its name, the rest are icons.
+   <nav class="bottomnav"><button class="on"><svg class="icon"/><span>Gear</span></button><button><svg class="icon"/><span>Calc</span></button></nav>
+   It is sticky, so put it last in the scrolling column. Sticky ignores margin, so the gap above the home bar is
+   the bottom offset (--bottomnav-gap). */
+.bottomnav { --bottomnav-gap: calc(env(safe-area-inset-bottom, 0px) + 12px); position: sticky; bottom: var(--bottomnav-gap); z-index: var(--z-sticky); display: flex; gap: 4px; width: calc(100% - 24px); max-width: 520px; margin: 0 auto var(--bottomnav-gap); padding: 6px; border: 1px solid var(--line); border-radius: var(--r-xl); background: var(--panel); box-shadow: var(--shadow-3), var(--sheen); }
+.bottomnav button { display: flex; align-items: center; justify-content: center; gap: 8px; flex: 1; height: max(var(--h-lg), 44px); padding: 0 10px; border: 0; border-radius: calc(var(--r-xl) - 6px); background: transparent; color: var(--muted); font-weight: var(--fw-bold); transition: background var(--dur-1) var(--ease), color var(--dur-1) var(--ease), flex-grow var(--dur-2) var(--ease); }
+.bottomnav button:hover { background: var(--hover); color: var(--ink); }
+.bottomnav button span { display: none; }
+.bottomnav button.on { flex: 1.6; background: var(--accent); color: var(--accent-ink); }
+.bottomnav button.on span { display: inline; }
+.bottomnav .icon { width: 20px; height: 20px; }
+
+/* ---- 11. Theme picker ---------------------------------------------------------------------------------- */
+/* The grid of themes in Settings > Look. Same build in every app; the list comes from themes.json.
+   <div class="themepick">
+     <div class="themebar"><div class="segmented"><button class="on">All</button><button>Dark</button><button>Light</button></div><span class="hint">19 themes</span></div>
+     <div class="themegrid">
+       <button class="themecard on" aria-pressed="true" style="--tg:#..;--tp:#..;--ts:#..;--tl:#..;--ti:#..;--tm:#..;--ta:#..">
+         <span class="themeprev"><span class="tside"><i></i><i></i><i></i></span><span class="tpane"><i></i><i></i><i></i><b></b></span></span>
+         <span class="themename">Spruce</span><span class="themeabout">Deep evergreen, mint</span>
+       </button> ...
+   Each card carries its own look's colors as variables (the "swatch" in themes.json: ground, panel, surface, line,
+   ink, muted, accent), so the little window on it always shows that look, whatever look the app is in. */
+.themepick { padding: var(--sp-3) 0 var(--sp-4); border-bottom: 1px solid var(--line-soft); }
+.themebar { display: flex; align-items: center; gap: var(--sp-3); margin-bottom: var(--sp-3); }
+.themebar .segmented { display: inline-flex; flex: none; margin: 0; }
+.themebar .segmented button { min-width: 58px; }
+.themegrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(124px, 1fr)); gap: var(--sp-2); }
+.themecard { position: relative; display: flex; flex-direction: column; min-width: 0; padding: 6px 6px 8px; border: 1px solid transparent; border-radius: var(--r-lg); background: transparent; color: var(--ink); text-align: left; cursor: pointer; transition: background var(--dur-1) var(--ease), border-color var(--dur-1) var(--ease), box-shadow var(--dur-1) var(--ease); }
+.themecard:hover { background: var(--hover); }
+.themecard:active .themeprev { transform: scale(0.98); }
+.themecard.on { border-color: var(--accent); background: var(--accent-soft); box-shadow: 0 0 0 1px var(--accent); }
+/* The tick on the picked card: a dot in that look's accent with a check in its panel color. */
+.themecard.on::before { content: ''; position: absolute; top: 11px; right: 11px; width: 16px; height: 16px; border-radius: var(--r-pill); background: var(--ta); box-shadow: 0 0 0 2px var(--tp); }
+.themecard.on::after { content: ''; position: absolute; top: 14px; right: 17px; width: 4px; height: 8px; border: solid var(--tp); border-width: 0 2px 2px 0; transform: rotate(45deg); }
+.themeprev { display: grid; grid-template-columns: 30% 1fr; gap: 5px; height: 70px; margin-bottom: 7px; padding: 6px; overflow: hidden; border: 1px solid var(--tl); border-radius: var(--r-md); background: var(--tg); transition: transform var(--dur-1) var(--ease); }
+.themeprev .tside { display: flex; flex-direction: column; gap: 4px; padding-top: 4px; }
+.themeprev .tside i { height: 5px; border-radius: var(--r-pill); background: var(--ts); }
+.themeprev .tside i:first-child { background: var(--ta); }
+.themeprev .tside i:last-child { width: 70%; }
+.themeprev .tpane { display: flex; flex-direction: column; gap: 4px; padding: 7px; border: 1px solid var(--tl); border-radius: var(--r-sm); background: var(--tp); }
+.themeprev .tpane i { height: 3px; border-radius: var(--r-pill); background: var(--tm); opacity: 0.7; }
+.themeprev .tpane i:first-child { width: 55%; height: 5px; background: var(--ti); opacity: 1; }
+.themeprev .tpane i:nth-child(3) { width: 72%; }
+.themeprev .tpane b { width: 38%; height: 9px; margin-top: auto; border-radius: var(--r-pill); background: var(--ta); }
+.themename { padding: 0 3px; overflow: hidden; font-size: var(--fs-sm); font-weight: var(--fw-medium); text-overflow: ellipsis; white-space: nowrap; }
+.themeabout { padding: 0 3px; color: var(--muted); font-size: var(--fs-2xs); line-height: 1.35; }

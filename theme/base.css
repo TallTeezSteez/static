@@ -1,0 +1,78 @@
+/* ==========================================================================================================
+   BASE: page defaults every app shares (text, focus ring, scrollbars, selection, plain form boxes).
+   Everything here uses :where() or plain tags, so an app's own class always wins without a fight.
+   ========================================================================================================== */
+
+*, *::before, *::after { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { margin: 0; }
+body { background: var(--ground); color: var(--ink); font: var(--fw-normal) var(--fs-md)/1.45 var(--font-ui); -webkit-font-smoothing: antialiased; }
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+button:disabled, input:disabled, select:disabled, textarea:disabled { opacity: 0.5; cursor: default; }
+::placeholder { color: var(--overlay); opacity: 1; }
+::selection { background: color-mix(in srgb, var(--accent) 30%, transparent); }
+:where(a) { color: var(--blue); text-underline-offset: 2px; }
+:where(hr) { border: 0; border-top: 1px solid var(--line-soft); }
+
+/* Focus: one ring everywhere, only when using the keyboard. */
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+/* Scrollbars: thin and quiet. */
+* { scrollbar-width: thin; scrollbar-color: color-mix(in srgb, var(--overlay) 55%, transparent) transparent; }
+@supports not (scrollbar-color: auto) {
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track, ::-webkit-scrollbar-corner { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--overlay) 55%, transparent); border-radius: var(--r-pill); border: 3px solid transparent; background-clip: content-box; }
+  ::-webkit-scrollbar-thumb:hover { background-color: var(--overlay); }
+}
+
+/* Keyboard key */
+kbd, .kbd { display: inline-block; padding: 1px 7px; border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 6px; background: var(--surface); font: var(--fw-medium) var(--fs-xs) var(--font-mono); color: var(--muted); }
+:where(code) { font-family: var(--font-mono); font-size: 0.9em; }
+.icon { width: 18px; height: 18px; flex: none; }
+
+/* Plain text boxes, dropdowns and text areas. Zero weight on purpose: any class an app adds overrides these.
+   A text box that sits INSIDE another control (a search pill, a command bar) gets class="bare" to drop the box. */
+:where(input:not([type]), input[type=text], input[type=password], input[type=email], input[type=number], input[type=search], input[type=url], input[type=tel], input[type=date], input[type=time], input[type=datetime-local], select, textarea) {
+  height: var(--h-md); padding: 0 10px; border: 1px solid var(--line); border-radius: var(--r-md); background: var(--field); outline: none; font-size: var(--fs-field);
+  transition: border-color var(--dur-1) var(--ease), box-shadow var(--dur-1) var(--ease);
+}
+:where(textarea) { height: auto; min-height: 72px; padding: 8px 10px; line-height: 1.45; resize: vertical; }
+:where(input:not([type]), input[type=text], input[type=password], input[type=email], input[type=number], input[type=search], input[type=url], input[type=tel], input[type=date], input[type=time], input[type=datetime-local], select, textarea):hover { border-color: var(--surface-2); }
+:where(input:not([type]), input[type=text], input[type=password], input[type=email], input[type=number], input[type=search], input[type=url], input[type=tel], input[type=date], input[type=time], input[type=datetime-local], select, textarea):focus { border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent); }
+:where(input, select, textarea):focus-visible { outline: none; }
+
+/* Dropdown: our own arrow in place of the system one. This rule is a bit heavier on purpose, so the arrow survives
+   an app rule like `.toolbar select { background: ...; padding: ... }`. */
+:where(select) { appearance: none; -webkit-appearance: none; cursor: pointer; text-overflow: ellipsis; }
+select:not([multiple]):not([size]) { padding-right: 28px; background-repeat: no-repeat; background-position: right 9px center;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%237F849C' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E"); }
+:where(select[multiple], select[size]) { height: auto; padding: 4px; }
+:where(option) { background: var(--panel); color: var(--ink); }
+
+/* Tick box and round option. A bit heavier on purpose, so an app rule like `.card input { border: ...; width: 100% }`
+   can't bend them out of shape. class="plain" opts out and gives the system one back. */
+input[type=checkbox]:not(.plain), input[type=radio]:not(.plain) { appearance: none; -webkit-appearance: none; width: var(--tick); height: var(--tick); min-width: var(--tick); margin: 0; padding: 0; flex: none; display: inline-grid; place-content: center; vertical-align: -3px; border: 1.5px solid var(--overlay); border-radius: var(--r-xs); background: transparent; box-shadow: none; cursor: pointer; transition: background var(--dur-1) var(--ease), border-color var(--dur-1) var(--ease); }
+input[type=radio]:not(.plain) { border-radius: 50%; }
+input[type=checkbox]:not(.plain):hover, input[type=radio]:not(.plain):hover { border-color: var(--accent); }
+input[type=checkbox]:not(.plain):checked, input[type=radio]:not(.plain):checked { background: var(--accent); border-color: var(--accent); -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+input[type=checkbox]:not(.plain):checked::before { content: ''; width: 9px; height: 5px; margin-top: -2px; border: solid var(--accent-ink); border-width: 0 0 2px 2px; transform: rotate(-45deg); }
+input[type=radio]:not(.plain):checked::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--accent-ink); }
+
+/* Slider */
+:where(input[type=range]) { appearance: none; -webkit-appearance: none; width: 180px; height: 18px; margin: 0; background: transparent; cursor: pointer; accent-color: var(--accent); }
+:where(input[type=range])::-webkit-slider-runnable-track { height: 4px; border-radius: var(--r-pill); background: var(--line); }
+:where(input[type=range])::-webkit-slider-thumb { -webkit-appearance: none; width: 14px; height: 14px; margin-top: -5px; border: 0; border-radius: 50%; background: var(--range, var(--accent)); box-shadow: var(--shadow-1); transition: transform var(--dur-1) var(--ease); }
+:where(input[type=range]):hover::-webkit-slider-thumb { transform: scale(1.15); }
+:where(input[type=range])::-moz-range-track { height: 4px; border-radius: var(--r-pill); background: var(--line); }
+:where(input[type=range])::-moz-range-thumb { width: 14px; height: 14px; border: 0; border-radius: 50%; background: var(--range, var(--accent)); }
+
+/* The built-in progress bar:  <progress value="40" max="100"></progress>  Same look as .progress. Zero weight, so an app class wins. */
+:where(progress) { appearance: none; -webkit-appearance: none; width: 100%; height: 6px; overflow: hidden; border: 0; border-radius: var(--r-pill); background: var(--line); color: var(--accent); vertical-align: middle; }
+:where(progress)::-webkit-progress-bar { border-radius: var(--r-pill); background: var(--line); }
+:where(progress)::-webkit-progress-value { border-radius: var(--r-pill); background: var(--accent); transition: width var(--dur-3) var(--ease); }
+:where(progress)::-moz-progress-bar { border-radius: var(--r-pill); background: var(--accent); }
+
+/* A text box inside another control: no box of its own. */
+.bare, .bare:hover, .bare:focus { height: auto; min-height: 0; padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; outline: none; }

@@ -1,0 +1,50 @@
+/* ==========================================================================================================
+   CLEAN LOOK (Nov 2026): the same colors, corners and glass, with far fewer outlines.
+
+   Switch it on with  <html data-clean="on">.  Left off (or "off"), nothing in this file applies.
+
+   The rule: an outline is only for something you type in (text boxes, dropdowns) or something that floats
+   (dialogs, menus, toasts). Everything else is set apart by space, a quiet fill (--fill-soft) or a thin divider
+   between rows (--line-faint). One loud button per screen; the rest are quiet.
+   An app adds its own parts the same way, under  :root[data-clean='on'].
+   ========================================================================================================== */
+
+/* Buttons: the plain button loses its outline and sits on a quiet fill. Primary, soft, ghost, danger are unchanged. */
+:root[data-clean='on'] .btn:not(.primary, .soft, .ghost, .danger, .link) { border-color: transparent; background: var(--fill-soft); }
+:root[data-clean='on'] .btn:not(.primary, .soft, .ghost, .danger, .link):hover { border-color: transparent; background: var(--fill-hover); }
+:root[data-clean='on'] .btn.primary { font-weight: var(--fw-medium); }
+:root[data-clean='on'] .menubtn { font-weight: var(--fw-normal); }
+
+/* Switch with 2 to 4 choices, and the search box: no outline, quiet fill. The search box still lights up when you type in it. */
+:root[data-clean='on'] .segmented { border-color: transparent; background: var(--fill-soft); }
+:root[data-clean='on'] .segmented button { font-weight: var(--fw-medium); }
+:root[data-clean='on'] .segmented button.on { box-shadow: none; }
+:root[data-clean='on'] .searchbox { border-color: transparent; border-radius: var(--r-md); background: var(--fill-soft); }
+:root[data-clean='on'] .searchbox:hover { border-color: transparent; background: var(--fill-hover); }
+:root[data-clean='on'] .searchbox:focus-within { border-color: var(--accent); }
+
+/* Status pills become a small colored dot and the word. Plain pills (counts, labels) just get lighter text. */
+:root[data-clean='on'] .pill { font-weight: var(--fw-medium); }
+:root[data-clean='on'] .pill:is(.on, .ok, .warn, .err, .info) { gap: 6px; padding: 0; background: transparent; color: var(--muted); }
+:root[data-clean='on'] .pill:is(.on, .ok, .warn, .err, .info)::before { content: ''; flex: none; width: 6px; height: 6px; border-radius: 50%; background: var(--ok); }
+:root[data-clean='on'] .pill.warn::before { background: var(--warn); }
+:root[data-clean='on'] .pill.err::before { background: var(--err); }
+:root[data-clean='on'] .pill.info::before { background: var(--info); }
+
+/* Cards: a quiet fill, no outline. */
+:root[data-clean='on'] .card:not(.raised) { border-color: transparent; background: var(--fill-soft); }
+:root[data-clean='on'] .card.hover:not(.raised):hover { border-color: transparent; background: var(--fill-hover); }
+
+/* The frame: tabs sit straight on the pane, the picked tab is a quiet fill, one thin line under the toolbar. */
+:root[data-clean='on'] .tabbar { border-bottom-color: transparent; background: transparent; }
+:root[data-clean='on'] .tab.on { background: var(--fill-hover); box-shadow: none; font-weight: var(--fw-medium); }
+:root[data-clean='on'] .toolbar { border-bottom-color: var(--line-faint); }
+:root[data-clean='on'] .toolbar .sep { background: color-mix(in srgb, var(--ink) 12%, transparent); }
+:root[data-clean='on'] .toolbar select { border-color: transparent; background-color: transparent; }
+:root[data-clean='on'] .toolbar select:hover { background-color: var(--fill-hover); }
+:root[data-clean='on'] .toolbar .tb.primary { background: var(--accent-soft); color: var(--accent); font-weight: var(--fw-medium); }
+:root[data-clean='on'] .toolbar .tb.primary:hover { background: color-mix(in srgb, var(--accent) 26%, var(--panel)); }
+:root[data-clean='on'] .statusbar { border-top-color: transparent; }
+
+/* Light looks: the picked choice in a switch is a light chip, so it still stands out on the quiet fill. */
+:root[data-clean='on'][data-mode='light'] .segmented button.on { background: var(--panel); box-shadow: var(--shadow-1); }

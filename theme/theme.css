@@ -1,0 +1,7 @@
+/* Wyatt's app theme, all in one. In an app:  @import '<path>/theme/theme.css';  (or import it from the app's main file).
+   Order matters: tokens, then base, then glass, then components, then clean (it only does anything with data-clean="on"). Fonts are separate (fonts.css) so an app can use its own copy. */
+@import './tokens.css';
+@import './base.css';
+@import './glass.css';
+@import './components.css';
+@import './clean.css';
