@@ -28,6 +28,7 @@ export function toSummary(html: string): string {
 }
 
 function absolute(url: string, base: string): string {
+  if (!url || !url.trim()) return ''; // an empty link must not turn into the feed's own address
   try {
     const u = new URL(url.trim(), base);
     return u.protocol === 'https:' || u.protocol === 'http:' ? u.toString() : '';
