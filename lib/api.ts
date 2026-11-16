@@ -179,9 +179,11 @@ const PRIVATE: Record<string, Handler> = {
   },
 
   'POST /api/refresh': async (c) => {
+    // "only" lets the page ask for videos and the paper in two short requests instead of one long one.
     const force = !!c.body?.force;
-    const gather = await runGather(c, { force });
-    const feeds = await refreshFeeds(c, { force });
+    const only = c.body?.only;
+    const gather = only === 'paper' ? undefined : await runGather(c, { force });
+    const feeds = only === 'videos' ? undefined : await refreshFeeds(c, { force });
     return json({ gather, feeds });
   },
 

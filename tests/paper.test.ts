@@ -183,6 +183,14 @@ describe('the daily job', () => {
     expect((await call(deps, 'GET', '/api/cron')).body).toEqual({ skipped: 'ran-recently' });
   });
 
+  it('lets the page refresh videos and the paper separately', async () => {
+    const deps = makeDeps(db);
+    const cookie = await signIn(deps);
+    expect((await call(deps, 'POST', '/api/refresh', { only: 'videos' }, cookie)).body).toEqual({ gather: { skipped: ['no-key'] } });
+    expect((await call(deps, 'POST', '/api/refresh', { only: 'paper' }, cookie)).body).toEqual({ feeds: { checked: 0, ok: 0, failed: 0, added: 0 } });
+    expect(Object.keys((await call(deps, 'POST', '/api/refresh', {}, cookie)).body).sort()).toEqual(['feeds', 'gather']);
+  });
+
   it('clears out old untouched videos but keeps anything he saved', async () => {
     await saveSecrets(db, {});
     const old = new Date(NOW.getTime() - 90 * 86400_000).toISOString();

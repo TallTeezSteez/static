@@ -118,10 +118,18 @@ async function gatherSearch(deps: Deps, yt: YouTube, topics: Topic[]): Promise<{
   let saved = 0;
   let error: string | undefined;
   try {
-    for (const { topic, q } of searchPlan(topics, now)) {
-      const ids = await yt.search(q, { publishedAfter: after, duration: topic.minMinutes >= 20 ? 'long' : 'medium' });
-      queries += 1;
-      for (const id of ids) if (!found.has(id)) found.set(id, topic.id);
+    const plan = searchPlan(topics, now);
+    for (let i = 0; i < plan.length; i += 4) { // four at a time keeps the whole run well inside a minute
+      const chunk = plan.slice(i, i + 4);
+      const results = await Promise.allSettled(chunk.map(({ topic, q }) =>
+        yt.search(q, { publishedAfter: after, duration: topic.minMinutes >= 20 ? 'long' : 'medium' })));
+      let failure: unknown;
+      results.forEach((r, j) => {
+        if (r.status === 'rejected') { failure = failure || r.reason; return; }
+        queries += 1;
+        for (const id of r.value) if (!found.has(id)) found.set(id, chunk[j].topic.id);
+      });
+      if (failure) throw failure;
     }
   } catch (e) {
     if (!(e instanceof QuotaError)) throw e;

@@ -1,36 +1,29 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Static
 
-## Getting Started
+Wyatt's own picker, live guide, football board and daily paper. One private page to open instead of YouTube.
 
-First, run the development server:
+- **Watch:** Tonight's picks with Reroll, shelves by topic, no Shorts, nothing already seen. Learns from thumbs.
+- **Live:** who's live on YouTube and Twitch, plus the week of regular shows.
+- **Football:** live scores, red-zone games lit up, one click to the game on YouTube.
+- **Paper:** a daily front page from RSS feeds, with videos mixed in and the weather.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## How it's put together
+
+- Next.js on Vercel. One page (`app/page.tsx`) and one API route (`app/api/[...path]/route.ts`) that hands every request to `lib/api.ts`.
+- All logic is in `lib/`. Postgres through `DATABASE_URL` (Neon, added from Vercel's Storage tab).
+- The look is the shared `theme/` folder (copy of `TallTeezSteez/theme`). Follow `theme/README.md`: no hand-written colors.
+- The YouTube key and Twitch keys are pasted into Settings and kept in the database, never in this repo.
+- A daily job (`vercel.json`, 4 AM Mountain) pulls new videos and articles. Opening the app after a few hours away does the same.
+
+## Working on it
+
+```
+npm install
+npm test          # needs a local Postgres: TEST_DATABASE_URL, default postgres://postgres@127.0.0.1:5433/static_test
+npm run build
+DATABASE_URL=... npx tsx scripts/seed-dev.ts   # made-up data for a look-through (wipes that database)
+DATABASE_URL=... npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Design: `docs/superpowers/specs/`. Build plan: `docs/superpowers/plans/`.
+Changes go in through a pull request that Claude opens and merges after the Vercel check passes.
