@@ -1,7 +1,7 @@
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 import type { Db, Deps, Video } from '@/lib/types';
 import { QuotaError, YouTube } from '@/lib/youtube';
-import { SEARCH_DAILY_CAP, addStarterChannels, runGather, upsertVideos } from '@/lib/gather';
+import { SEARCH_DAILY_CAP, addStarterChannels, reclassifyCatalog, runGather, upsertVideos } from '@/lib/gather';
 import { STARTER_CHANNELS } from '@/lib/starter';
 import { DEFAULT_TOPICS } from '@/lib/topics';
 import { DEFAULT_SETTINGS, saveSecrets } from '@/lib/settings';
@@ -204,6 +204,48 @@ describe('more on screen, less junk', () => {
     expect(home.shelves.find((s: any) => s.id === 'truecrime').picks).toHaveLength(20);
     const browse = (await call(deps, 'GET', '/api/picks?n=48', undefined, cookie)).body;
     expect(browse.picks).toHaveLength(48);
+  });
+
+  it('leaves out anything over four hours: those are all-day stream replays', async () => {
+    await upsertVideos(db, [
+      video({ id: vidId(1), title: 'LIVE: day 4 of the trial', durationS: 5 * 3600 }),
+      video({ id: vidId(2), channelId: chanId('B'), title: 'A long documentary', durationS: 3 * 3600 }),
+    ], DEFAULT_TOPICS, 'uploads');
+    const all = (await call(deps, 'GET', '/api/picks?n=10', undefined, cookie)).body.picks.map((p: any) => p.id);
+    expect(all).toEqual([vidId(2)]);
+    const long = (await call(deps, 'GET', '/api/picks?n=10&time=long', undefined, cookie)).body.picks.map((p: any) => p.id);
+    expect(long).toEqual([vidId(2)]);
+  });
+
+  it('blocks watch-along streams by default', () => {
+    for (const title of ['Steelers vs Bengals Live Play by Play & Reaction', 'Super Bowl watch party', 'Friday night livestream'])
+      expect(isJunk(video({ id: 'x', title }), DEFAULT_SETTINGS.blockWords)).toBe(true);
+    expect(isJunk(video({ id: 'x', title: 'Live PD: Police Patrol' }), DEFAULT_SETTINGS.blockWords)).toBe(false);
+  });
+
+  it('re-files the whole catalog when the filing rules change, once', async () => {
+    await db.query(`insert into channels (id, title, source, topic) values ($1, 'Chan D', 'default', 'docs')`, [chanId('D')]);
+    await upsertVideos(db, [
+      video({ id: vidId(1), title: 'A spy tells her story' }),
+      video({ id: vidId(2), channelId: chanId('B'), title: 'Building AI agents' }),
+      video({ id: vidId(3), channelId: chanId('C'), title: 'Found by a true crime search' }),
+      video({ id: vidId(4), channelId: chanId('D'), title: 'Inside the port', durationS: 3000 }),
+    ], DEFAULT_TOPICS, 'uploads');
+    // as the old, looser rules left them
+    await db.query(`update videos set topics = '{ai,business}' where id = $1`, [vidId(1)]);
+    await db.query(`update videos set topics = '{tech}' where id = $1`, [vidId(2)]);
+    await db.query(`update videos set topics = '{truecrime,docs}', source = 'search' where id = $1`, [vidId(3)]);
+    await db.query(`update videos set topics = '{}' where id = $1`, [vidId(4)]);
+    await saveSecrets(db, { youtubeKey: 'KEY' });
+    await db.query(`insert into kv (key, value) values ('gather:uploads', $1), ('gather:search', $1)`, [JSON.stringify({ at: NOW.toISOString() })]);
+    await runGather(deps);
+    const topics = Object.fromEntries((await db.query('select id, topics from videos')).rows.map((r: any) => [r.id, [...r.topics].sort()]));
+    expect(topics).toEqual({ [vidId(1)]: [], [vidId(2)]: ['ai'], [vidId(3)]: ['docs', 'truecrime'], [vidId(4)]: ['docs'] });
+    // a second run leaves hand-made changes alone
+    await db.query(`update videos set topics = '{tech}' where id = $1`, [vidId(1)]);
+    await runGather(deps);
+    expect((await db.query('select topics from videos where id = $1', [vidId(1)])).rows[0].topics).toEqual(['tech']);
+    expect(typeof reclassifyCatalog).toBe('function');
   });
 
   it('never offers junk, and the blocked-word list can be changed in Settings', async () => {

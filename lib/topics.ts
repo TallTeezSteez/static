@@ -4,7 +4,7 @@ import type { Topic, Video } from './types';
 export const DEFAULT_TOPICS: Topic[] = [
   {
     id: 'docs', name: 'Long docs', minMinutes: 20,
-    keywords: ['documentary', 'full documentary', 'the story of', 'the rise and fall', 'investigation', 'explained', 'deep dive', 'history of'],
+    keywords: ['documentary', 'full documentary', 'the story of', 'the rise and fall', 'deep dive', 'history of'],
     queries: ['full documentary', 'documentary 2026', 'investigative documentary', 'engineering documentary'],
   },
   {
@@ -59,12 +59,19 @@ function escapeRe(s: string): string {
   return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-/** Which topics a video belongs to: whole-word keyword match on its text, or a matching YouTube category. */
+/** Bump this when the filing rules below change: the next update then re-files the whole catalog. */
+export const CLASSIFY_VERSION = 2;
+
+/**
+ * Which topics a video belongs to: a whole-word keyword match on its title or channel name, or a matching
+ * YouTube category. Tags and descriptions are not read: they're stuffed with words ("ai", "tech", "business")
+ * that have nothing to do with the video, and filed things on the wrong shelf.
+ */
 export function classify(
   v: Pick<Video, 'title' | 'channelTitle' | 'tags' | 'description' | 'categoryId' | 'durationS'>,
   topics: Topic[],
 ): string[] {
-  const text = `${v.title} \n ${v.channelTitle} \n ${v.tags} \n ${(v.description || '').slice(0, 300)}`.toLowerCase();
+  const text = `${v.title} \n ${v.channelTitle}`.toLowerCase();
   const out: string[] = [];
   for (const t of topics) {
     if (t.id === 'docs' && v.durationS < 20 * 60) continue;

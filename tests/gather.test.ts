@@ -48,9 +48,15 @@ describe('topics', () => {
   it('uses the YouTube category for gaming', () => {
     expect(classify({ ...base, title: 'Untitled stream', categoryId: '20' }, DEFAULT_TOPICS)).toEqual(['pcgaming']);
   });
-  it('finds words in the channel name and tags too', () => {
+  it('finds words in the channel name', () => {
     expect(classify({ ...base, title: 'Episode 12', channelTitle: 'HVAC School' }, DEFAULT_TOPICS)).toContain('shoptalk');
-    expect(classify({ ...base, title: 'Episode 12', tags: 'elk, backcountry' }, DEFAULT_TOPICS)).toContain('outdoors');
+  });
+  it('ignores tags and descriptions, which are stuffed with words that have nothing to do with the video', () => {
+    expect(classify({ ...base, title: 'Episode 12', tags: 'elk, backcountry, ai, tech' }, DEFAULT_TOPICS)).toEqual([]);
+    expect(classify({ ...base, title: 'A spy tells her story', description: 'Sponsored by an AI startup. Business inquiries: ...' }, DEFAULT_TOPICS)).toEqual([]);
+  });
+  it('does not call something a documentary just because the title says "explained"', () => {
+    expect(classify({ ...base, title: 'The new tax rules explained', durationS: 3000 }, DEFAULT_TOPICS)).not.toContain('docs');
   });
 });
 
