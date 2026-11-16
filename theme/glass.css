@@ -1,0 +1,30 @@
+/* ==========================================================================================================
+   GLASS: window transparency, the same in every app.
+
+   How it works
+   - The app sets two things on <html>:  data-glass="on"  and  --t: 0% to 80%  (the Transparency slider).
+   - The real blur of the desktop behind the window comes from the system (Windows acrylic / macOS vibrancy,
+     switched on by the app's Tauri or Electron side). This file only decides how see-through each layer is.
+   - Three layers, from back to front:
+       1. the window frame (.app)        most see-through
+       2. the working panels (.glass-panel, and .content / .pane in Drift)   follow the slider
+       3. floating things (dialogs, settings, menus, toasts, the bottom nav)   never drop below 78% solid, and blur what is
+          under them, so text on them always stays easy to read.
+   - Glass is for dark looks. Light looks (latte) turn it off.
+   ========================================================================================================== */
+
+:root { --g: 100%; --glass-blur: 22px; --float-min: 78%; }
+:root[data-glass='on'] { --g: calc(100% - var(--t, 0%)); }
+
+:root[data-glass='on'], :root[data-glass='on'] body { background: transparent; }
+:root[data-glass='on'] .app { background: color-mix(in srgb, var(--ground) calc(var(--g) - 15%), transparent); }
+:root[data-glass='on'] :is(.glass-panel, .content, .pane) { background: color-mix(in srgb, var(--panel) var(--g), transparent); }
+
+/* Floating layer. Use .glass-float on anything of your own that floats over the app. */
+:root[data-glass='on'] :is(.glass-float, .dialog, .menu, .toast, .popover, .bottomnav) {
+  background: color-mix(in srgb, var(--panel) max(var(--g), var(--float-min)), transparent);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(1.25); backdrop-filter: blur(var(--glass-blur)) saturate(1.25);
+}
+
+/* A frosted chip that sits on top of pictures or a canvas (works with glass on or off). */
+.frost { background: color-mix(in srgb, var(--crust) 62%, transparent); border: 1px solid color-mix(in srgb, var(--ink) 16%, transparent); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }

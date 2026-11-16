@@ -1,0 +1,450 @@
+/* ==========================================================================================================
+   Wyatt's app theme: TOKENS (colors, corners, spacing, type, shadows, motion).
+   Catppuccin Mocha is the home look. Every app loads this file first and only ever uses these variables.
+   Rule: never write a color, corner size or shadow by hand in an app. If one is missing, add it here.
+   Switch the look with <html data-theme="...">. There are 19 looks; themes.json is the list (name, dark or light,
+   one line about it, colors for the picker). Catppuccin: mocha, latte. Plain: dark, black. Wyatt's own:
+   wasatch, midnight, glacier, storm, alpenglow, redrock, ember, copper, basalt, spruce, sagebrush (dark) and
+   powder, bonneville, aspen, meadow (light).
+   Apps also set <html data-mode="dark | light"> (from themes.json) so a rule can say "any light look".
+   After changing a color here run:  node theme/check.mjs --fix   (checks contrast, updates the data files).
+   ========================================================================================================== */
+
+:root, :root[data-theme='mocha'] {
+  color-scheme: dark;
+
+  /* ---- Catppuccin Mocha, the full palette (MIT). Use the role names below in app code, not these. ---- */
+  --ctp-rosewater: #F5E0DC; --ctp-flamingo: #F2CDCD; --ctp-pink: #F5C2E7; --ctp-mauve: #CBA6F7;
+  --ctp-red: #F38BA8; --ctp-maroon: #EBA0AC; --ctp-peach: #FAB387; --ctp-yellow: #F9E2AF;
+  --ctp-green: #A6E3A1; --ctp-teal: #94E2D5; --ctp-sky: #89DCEB; --ctp-sapphire: #74C7EC;
+  --ctp-blue: #89B4FA; --ctp-lavender: #B4BEFE;
+  --ctp-text: #CDD6F4; --ctp-subtext1: #BAC2DE; --ctp-subtext0: #A6ADC8;
+  --ctp-overlay2: #9399B2; --ctp-overlay1: #7F849C; --ctp-overlay0: #6C7086;
+  --ctp-surface2: #585B70; --ctp-surface1: #45475A; --ctp-surface0: #313244;
+  --ctp-base: #1E1E2E; --ctp-mantle: #181825; --ctp-crust: #11111B;
+
+  /* ---- Roles: what a color is FOR. These are the names apps use. ---- */
+  --ground: var(--ctp-mantle);      /* the window itself, behind everything */
+  --panel: var(--ctp-base);         /* the main working area, dialogs, menus */
+  --surface: var(--ctp-surface0);   /* raised things: hover, picked tab, cards on a panel */
+  --surface-2: var(--ctp-surface2); /* one step brighter: pressed, scrollbar thumb */
+  --crust: var(--ctp-crust);        /* the darkest: wells, code blocks, behind glass */
+  --line: var(--ctp-surface1);      /* borders */
+  --overlay: var(--ctp-overlay0);   /* faint text: placeholders, section labels, disabled */
+  --subtle: var(--ctp-overlay1);    /* small icons, secondary marks */
+  --ink: var(--ctp-text);           /* normal text */
+  --muted: var(--ctp-subtext0);     /* helper text */
+  --accent: var(--ctp-mauve);       /* the one highlight color: primary buttons, picked things, focus */
+  --accent-ink: var(--ctp-crust);   /* text on top of the accent */
+  --accent-soft: #3A3350;           /* quiet accent fill: picked row, soft button */
+
+  /* Status */
+  --ok: var(--ctp-green); --err: var(--ctp-red); --warn: var(--ctp-peach); --info: var(--ctp-blue);
+
+  /* Named colors for tags, labels, charts */
+  --red: var(--ctp-red); --maroon: var(--ctp-maroon); --peach: var(--ctp-peach); --yellow: var(--ctp-yellow);
+  --green: var(--ctp-green); --teal: var(--ctp-teal); --sky: var(--ctp-sky); --sapphire: var(--ctp-sapphire);
+  --blue: var(--ctp-blue); --lavender: var(--ctp-lavender); --mauve: var(--ctp-mauve); --pink: var(--ctp-pink);
+  --flamingo: var(--ctp-flamingo); --rosewater: var(--ctp-rosewater);
+
+  /* Logo lines: lavender, blue, sapphire */
+  --brand-1: var(--ctp-lavender); --brand-2: var(--ctp-blue); --brand-3: var(--ctp-sapphire);
+
+  /* Shadows: 1 = resting card, 2 = raised (picked tab, floating button), 3 = popover / menu, --shadow = window */
+  --shadow-rgb: 0, 0, 0;
+  --shadow-1: 0 1px 2px rgba(var(--shadow-rgb), 0.24);
+  --shadow-2: 0 4px 14px rgba(var(--shadow-rgb), 0.28);
+  --shadow-3: 0 14px 40px rgba(var(--shadow-rgb), 0.36);
+  --shadow: 0 18px 50px rgba(var(--shadow-rgb), 0.45);
+  --sheen: inset 0 1px 0 rgba(255, 255, 255, 0.06); /* the thin light edge on top of raised dark things */
+  --scrim: rgba(17, 17, 27, 0.5);                   /* the dim layer behind a dialog */
+}
+
+:root[data-theme='latte'] {
+  color-scheme: light;
+  --ctp-rosewater: #DC8A78; --ctp-flamingo: #DD7878; --ctp-pink: #EA76CB; --ctp-mauve: #8839EF;
+  --ctp-red: #D20F39; --ctp-maroon: #E64553; --ctp-peach: #FE640B; --ctp-yellow: #DF8E1D;
+  --ctp-green: #40A02B; --ctp-teal: #179299; --ctp-sky: #04A5E5; --ctp-sapphire: #209FB5;
+  --ctp-blue: #1E66F5; --ctp-lavender: #7287FD;
+  --ctp-text: #4C4F69; --ctp-subtext1: #5C5F77; --ctp-subtext0: #6C6F85;
+  --ctp-overlay2: #7C7F93; --ctp-overlay1: #8C8FA1; --ctp-overlay0: #9CA0B0;
+  --ctp-surface2: #ACB0BE; --ctp-surface1: #BCC0CC; --ctp-surface0: #CCD0DA;
+  --ctp-base: #EFF1F5; --ctp-mantle: #E6E9EF; --ctp-crust: #DCE0E8;
+  --surface: var(--ctp-crust); --surface-2: var(--ctp-surface1); --line: var(--ctp-surface0);
+  --accent-ink: #FFFFFF; --accent-soft: #E3D5FB;
+  --shadow-rgb: 76, 79, 105;
+  --shadow-1: 0 1px 2px rgba(var(--shadow-rgb), 0.12);
+  --shadow-2: 0 2px 10px rgba(var(--shadow-rgb), 0.16);
+  --shadow-3: 0 12px 32px rgba(var(--shadow-rgb), 0.2);
+  --shadow: 0 18px 50px rgba(var(--shadow-rgb), 0.22);
+  --sheen: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  --scrim: rgba(76, 79, 105, 0.28);
+}
+
+:root[data-theme='dark'] {
+  /* Plain dark: neutral grays with a blue accent, for anyone who doesn't want Mocha. */
+  color-scheme: dark;
+  --ground: #181818; --panel: #1F1F1F; --surface: #2C2C2C; --surface-2: #4A4A4A; --crust: #121212; --line: #3A3A3A;
+  --overlay: #707070; --subtle: #858585; --ink: #E8E8E8; --muted: #A3A3A3;
+  --accent: #5B9BF8; --accent-ink: #0B0B0B; --accent-soft: #22344D;
+  --ok: #7FD18B; --err: #F07178; --warn: #F2A65A; --info: #5B9BF8;
+  --red: #F07178; --maroon: #E58C92; --peach: #F2A65A; --yellow: #E8C46B; --green: #7FD18B; --teal: #5CC8BE;
+  --sky: #6CC6E8; --sapphire: #58B0DC; --blue: #5B9BF8; --lavender: #9AA8F5; --mauve: #B592F0; --pink: #E68AC7;
+  --shadow: 0 18px 50px rgba(var(--shadow-rgb), 0.55);
+  --scrim: rgba(0, 0, 0, 0.5);
+}
+
+:root[data-theme='black'] {
+  /* True black: best on OLED screens. */
+  color-scheme: dark;
+  --ground: #000000; --panel: #0A0A0A; --surface: #1A1A1A; --surface-2: #3A3A3A; --crust: #000000; --line: #2A2A2A;
+  --overlay: #666666; --subtle: #808080; --ink: #F2F2F2; --muted: #9C9C9C;
+  --accent: #FFFFFF; --accent-ink: #000000; --accent-soft: #262626;
+  --ok: #7FD18B; --err: #FF6B6B; --warn: #F2A65A; --info: #6EA8FE;
+  --red: #FF6B6B; --maroon: #F08A8A; --peach: #F2A65A; --yellow: #F4D35E; --green: #7FD18B; --teal: #5CC8BE;
+  --sky: #6CC6E8; --sapphire: #58B0DC; --blue: #6EA8FE; --lavender: #A9B4FF; --mauve: #C4A1FF; --pink: #F28AC9;
+  --shadow: 0 18px 50px rgba(var(--shadow-rgb), 0.8);
+  --scrim: rgba(0, 0, 0, 0.6);
+}
+
+/* ---- Wyatt's own looks (Nov 2026) ---------------------------------------------------------------------------
+   Built the same way as Mocha: one family of backgrounds, one accent, 14 named colors tuned to sit together,
+   and text that passes the contrast check on every background. Each one sets every role, so a whole app follows.
+   The accent is always one of the look's own named colors. ---------------------------------------------------- */
+
+:root[data-theme='wasatch'] {
+  /* Wasatch: cool slate, ice blue. */
+  color-scheme: dark;
+  --ground: #1B2530; --panel: #202C39; --surface: #334150; --surface-2: #5C6B7E; --crust: #151D27; --line: #485667;
+  --overlay: #6D8096; --subtle: #8195AC; --ink: #D4E2EC; --muted: #AFB8C4;
+  --accent: var(--sapphire); --accent-ink: #151D27; --accent-soft: #334B5D;
+  --ok: var(--green); --err: var(--red); --warn: var(--peach); --info: var(--blue);
+  --red: #E4979F; --maroon: #DDABB9; --peach: #E5B193; --yellow: #E3D4A0; --green: #9AD9AD; --teal: #8CD7D3;
+  --sky: #87D3E8; --sapphire: #80C8EE; --blue: #87B7F8; --lavender: #AEBAF3; --mauve: #C4AFF1; --pink: #E5B7D9;
+  --flamingo: #E7CFD4; --rosewater: #EAE0E1;
+  --brand-1: var(--lavender); --brand-2: var(--blue); --brand-3: var(--sapphire);
+  --scrim: rgba(21, 29, 39, 0.5);
+}
+
+:root[data-theme='midnight'] {
+  /* Midnight: deep navy, bright blue. */
+  color-scheme: dark;
+  --ground: #081022; --panel: #0C162C; --surface: #1E2A42; --surface-2: #445270; --crust: #040918; --line: #313E59;
+  --overlay: #5F7093; --subtle: #7285AA; --ink: #CDDAF1; --muted: #A6B1C7;
+  --accent: var(--blue); --accent-ink: #040918; --accent-soft: #213456;
+  --ok: var(--green); --err: var(--red); --warn: var(--peach); --info: var(--blue);
+  --red: #F3828F; --maroon: #E69BB1; --peach: #F1A278; --yellow: #E7CC7E; --green: #83D799; --teal: #6CD6CF;
+  --sky: #64D0ED; --sapphire: #59C0F8; --blue: #74ACFE; --lavender: #A7B0FE; --mauve: #C5A0FE; --pink: #EEA7D8;
+  --flamingo: #EBC3CB; --rosewater: #ECD6D8;
+  --brand-1: var(--lavender); --brand-2: var(--blue); --brand-3: var(--sapphire);
+  --scrim: rgba(4, 9, 24, 0.5);
+}
+
+:root[data-theme='glacier'] {
+  /* Glacier: blue-green depths, cyan. */
+  color-scheme: dark;
+  --ground: #091D23; --panel: #0B242C; --surface: #1D3941; --surface-2: #44636D; --crust: #05151B; --line: #314E57;
+  --overlay: #547884; --subtle: #678D9A; --ink: #CEE5E7; --muted: #A8BBC2;
+  --accent: var(--teal); --accent-ink: #05151B; --accent-soft: #1E494F;
+  --ok: var(--green); --err: var(--red); --warn: var(--peach); --info: var(--blue);
+  --red: #EF9C9E; --maroon: #E5B1BB; --peach: #EEB78F; --yellow: #E9DC99; --green: #96E3AB; --teal: #6ADDD9;
+  --sky: #80DDEE; --sapphire: #75CEF5; --blue: #86BFFF; --lavender: #AFC2FC; --mauve: #C9B6FA; --pink: #EDBDDD;
+  --flamingo: #EDD6D6; --rosewater: #F0E8E3;
+  --brand-1: var(--lavender); --brand-2: var(--blue); --brand-3: var(--sapphire);
+  --scrim: rgba(5, 21, 27, 0.5);
+}
+
+:root[data-theme='storm'] {
+  /* Storm: graphite, electric violet. */
+  color-scheme: dark;
+  --ground: #121317; --panel: #18191E; --surface: #2A2C32; --surface-2: #53555C; --crust: #0B0C0F; --line: #3F4147;
+  --overlay: #6C707A; --subtle: #81848F; --ink: #DBE0E9; --muted: #B4B7C0;
+  --accent: var(--lavender); --accent-ink: #0B0C0F; --accent-soft: #34364B;
+  --ok: var(--green); --err: var(--red); --warn: var(--peach); --info: var(--blue);
+  --red: #F68691; --maroon: #EA9FB1; --peach: #F4A57B; --yellow: #ECCE82; --green: #8ED99B; --teal: #79D8CF;
+  --sky: #72D2EC; --sapphire: #67C3F7; --blue: #81B2FF; --lavender: #A2A8FE; --mauve: #CAA4FC; --pink: #F2AAD8;
+  --flamingo: #F0C6CC; --rosewater: #F1D9D9;
+  --brand-1: var(--lavender); --brand-2: var(--blue); --brand-3: var(--sapphire);
+  --scrim: rgba(11, 12, 15, 0.5);
+}
+
+:root[data-theme='alpenglow'] {
+  /* Alpenglow: plum dusk, rose. */
+  color-scheme: dark;
+  --ground: #20131D; --panel: #281824; --surface: #3D2B39; --surface-2: #685363; --crust: #170C15; --line: #533F4E;
+  --overlay: #80677A; --subtle: #967B8F; --ink: #E9D6E0; --muted: #BEAFBA;
+  --accent: var(--pink); --accent-ink: #170C15; --accent-soft: #523343;
+  --ok: var(--green); --err: var(--red); --warn: var(--peach); --info: var(--blue);
+  --red: #F88A94; --maroon: #EEA1B2; --peach: #F8A883; --yellow: #F4CF8C; --green: #A5D7A0; --teal: #95D6CD;
+  --sky: #90D1E7; --sapphire: #85C2EF; --blue: #91B3FC; --lavender: #BBB5F5; --mauve: #D3A7F4; --pink: #F89EC1;
+  --flamingo: #F8C8CD; --rosewater: #FADAD9;
+  --brand-1: var(--lavender); --brand-2: var(--blue); --brand-3: var(--sapphire);
+  --scrim: rgba(23, 12, 21, 0.5);
+}
+
+:root[data-theme='redrock'] {
+  /* Redrock: canyon brown, terracotta. */
+  color-scheme: dark;
+  --ground: #221311; --panel: #2B1916; --surface: #412B28; --surface-2: #6D5450; --crust: #190D0B; --line: #57403C;
+  --overlay: #866863; --subtle: #9C7C77; --ink: #E8D5C6; --muted: #C3ABA7;
+  --accent: var(--peach); --accent-ink: #190D0B; --accent-soft: #522E26;
+  --ok: var(--green); --err: var(--red); --warn: var(--yellow); --info: var(--blue);
+  --red: #F16C8B; --maroon: #EB9BA0; --peach: #EC8367; --yellow: #F1C777; --green: #A4D08C; --teal: #95CFBB;
+  --sky: #8FCBD5; --sapphire: #84BCDE; --blue: #90ADEB; --lavender: #B8AFE4; --mauve: #D0A1E3; --pink: #F3A7C4;
+  --flamingo: #F5C1BA; --rosewater: #F8D3C7;
+  --brand-1: var(--lavender); --brand-2: var(--blue); --brand-3: var(--sapphire);
+  --scrim: rgba(25, 13, 11, 0.5);
+}
+
+:root[data-theme='ember'] {
+  /* Ember: warm charcoal, orange. */
+  color-scheme: dark;
+  --ground: #191511; --panel: #201A16; --surface: #342E29; --surface-2: #5E5651; --crust: #110D0B; --line: #49423D;
+  --overlay: #796E66; --subtle: #8E827A; --ink: #E6DBCA; --muted: #C0B1A6;
+  --accent: var(--peach); --accent-ink: #110D0B; --accent-soft: #4D351F;
+  --ok: var(--green); --err: var(--red); --warn: var(--yellow); --info: var(--blue);
+  --red: #FE8785; --maroon: #F4A0A6; --peach: #FFA245; --yellow: #F7CF70; --green: #9CDB8D; --teal: #89DAC4;
+  --sky: #82D5E2; --sapphire: #77C6ED; --blue: #88B5FE; --lavender: #B8B6F4; --mauve: #D4A7F2; --pink: #FBACCD;
+  --flamingo: #FAC8C1; --rosewater: #FCDBCD;
+  --brand-1: var(--lavender); --brand-2: var(--blue); --brand-3: var(--sapphire);
+  --scrim: rgba(17, 13, 11, 0.5);
+}
+
+:root[data-theme='copper'] {
+  /* Copper: shop gray, copper line. */
+  color-scheme: dark;
+  --ground: #191A1C; --panel: #1F2123; --surface: #323437; --surface-2: #5B5E62; --crust: #111315; --line: #47494D;
+  --overlay: #6D7278; --subtle: #82878D; --ink: #E2DBD4; --muted: #B9B3AD;
+  --accent: var(--peach); --accent-ink: #111315; --accent-soft: #463834;
+  --ok: var(--green); --err: var(--red); --warn: var(--yellow); --info: var(--blue);
+  --red: #ED8D8D; --maroon: #E5A3A9; --peach: #E09676; --yellow: #ECCD89; --green: #A4D499; --teal: #96D3C3;
+  --sky: #91CEDA; --sapphire: #86C0E0; --blue: #90B2EC; --lavender: #B6B4E6; --mauve: #CCA8E5; --pink: #EEAFCA;
+  --flamingo: #F0C7C4; --rosewater: #F4D9D0;
+  --brand-1: var(--lavender); --brand-2: var(--blue); --brand-3: var(--sapphire);
+  --scrim: rgba(17, 19, 21, 0.5);
+}
+
+:root[data-theme='basalt'] {
+  /* Basalt: near black, gold. */
+  color-scheme: dark;
+  --ground: #0E0D0A; --panel: #141310; --surface: #272522; --surface-2: #4F4D49; --crust: #070605; --line: #3B3935;
+  --overlay: #737069; --subtle: #88847D; --ink: #EAE6DB; --muted: #C1BDB4;
+  --accent: var(--yellow); --accent-ink: #070605; --accent-soft: #413820;
+  --ok: var(--green); --err: var(--red); --warn: var(--peach); --info: var(--blue);
+  --red: #FE9390; --maroon: #F9A7AE; --peach: #FEB07A; --yellow: #F3CD5F; --green: #9AE493; --teal: #84E3CD;
+  --sky: #7DDEEC; --sapphire: #72CEF8; --blue: #8FBDFE; --lavender: #B9BEFE; --mauve: #D7AEFE; --pink: #FFB4D6;
+  --flamingo: #FFD0C9; --rosewater: #FFE3D5;
+  --brand-1: var(--lavender); --brand-2: var(--blue); --brand-3: var(--sapphire);
+  --scrim: rgba(7, 6, 5, 0.5);
+}
+
+:root[data-theme='spruce'] {
+  /* Spruce: deep evergreen, mint. */
+  color-scheme: dark;
+  --ground: #0E1B16; --panel: #12221C; --surface: #25362F; --surface-2: #4C6058; --crust: #08130F; --line: #394B44;
+  --overlay: #5E776C; --subtle: #728C81; --ink: #D1E1D4; --muted: #A6B9B1;
+  --accent: var(--green); --accent-ink: #08130F; --accent-soft: #284635;
+  --ok: var(--green); --err: var(--red); --warn: var(--peach); --info: var(--blue);
+  --red: #F29592; --maroon: #E8ACB0; --peach: #F1B17F; --yellow: #EBD888; --green: #7FD899; --teal: #85DECB;
+  --sky: #7FDAE5; --sapphire: #74CBEE; --blue: #83BCFB; --lavender: #B0BEF4; --mauve: #CAB1F2; --pink: #EFB8D3;
+  --flamingo: #EFD1CB; --rosewater: #F2E3D7;
+  --brand-1: var(--lavender); --brand-2: var(--blue); --brand-3: var(--sapphire);
+  --scrim: rgba(8, 19, 15, 0.5);
+}
+
+:root[data-theme='sagebrush'] {
+  /* Sagebrush: soft gray-green, easy on the eyes. */
+  color-scheme: dark;
+  --ground: #212620; --panel: #272D25; --surface: #3B4139; --surface-2: #656C62; --crust: #1A1E18; --line: #50574E;
+  --overlay: #788274; --subtle: #8C9789; --ink: #D5D4BE; --muted: #A4B1A0;
+  --accent: var(--green); --accent-ink: #1A1E18; --accent-soft: #404C3A;
+  --ok: var(--green); --err: var(--red); --warn: var(--peach); --info: var(--blue);
+  --red: #E4978E; --maroon: #DCA8A6; --peach: #E4AE80; --yellow: #E4D18C; --green: #A3C790; --teal: #95D4BF;
+  --sky: #90D0D3; --sapphire: #84C2D8; --blue: #8CB5E2; --lavender: #B1B8DE; --mauve: #C5AEDC; --pink: #E5B5C5;
+  --flamingo: #E8CCC1; --rosewater: #ECDDCD;
+  --brand-1: var(--lavender); --brand-2: var(--blue); --brand-3: var(--sapphire);
+  --scrim: rgba(26, 30, 24, 0.5);
+}
+
+:root[data-theme='powder'] {
+  /* Powder: clean white, blue. */
+  color-scheme: light;
+  --ground: #EAEFF5; --panel: #F3F7FC; --surface: #DEE4EC; --surface-2: #BDC5CE; --crust: #E0E7EE; --line: #CDD5DE;
+  --overlay: #838F9C; --subtle: #727F8D; --ink: #273042; --muted: #5B6474;
+  --accent: var(--blue); --accent-ink: #FFFFFF; --accent-soft: #D1E1F6;
+  --ok: var(--green); --err: var(--red); --warn: var(--peach); --info: var(--blue);
+  --red: #C62B48; --maroon: #B3546D; --peach: #B25400; --yellow: #9C7C03; --green: #008131; --teal: #017E74;
+  --sky: #06869C; --sapphire: #0078A6; --blue: #1266D4; --lavender: #676BC8; --mauve: #844EBE; --pink: #AC538D;
+  --flamingo: #A67378; --rosewater: #967A76;
+  --brand-1: var(--lavender); --brand-2: var(--blue); --brand-3: var(--sapphire);
+  --shadow-rgb: 39, 48, 66;
+  --shadow-1: 0 1px 2px rgba(var(--shadow-rgb), 0.12);
+  --shadow-2: 0 2px 10px rgba(var(--shadow-rgb), 0.16);
+  --shadow-3: 0 12px 32px rgba(var(--shadow-rgb), 0.2);
+  --shadow: 0 18px 50px rgba(var(--shadow-rgb), 0.22);
+  --sheen: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  --scrim: rgba(39, 48, 66, 0.28);
+}
+
+:root[data-theme='bonneville'] {
+  /* Bonneville: salt-flat gray, teal. */
+  color-scheme: light;
+  --ground: #EFF3F4; --panel: #F7FBFC; --surface: #E2E8E9; --surface-2: #C2C9CA; --crust: #E5EBEC; --line: #D2D9DA;
+  --overlay: #879396; --subtle: #748286; --ink: #22272A; --muted: #54595C;
+  --accent: var(--teal); --accent-ink: #FFFFFF; --accent-soft: #D2E7E8;
+  --ok: var(--green); --err: var(--red); --warn: var(--peach); --info: var(--blue);
+  --red: #B93848; --maroon: #A95769; --peach: #B0590F; --yellow: #977A00; --green: #158333; --teal: #01787A;
+  --sky: #058396; --sapphire: #0579A3; --blue: #226AC5; --lavender: #656CB9; --mauve: #7E52B0; --pink: #A35785;
+  --flamingo: #9F7374; --rosewater: #957D76;
+  --brand-1: var(--lavender); --brand-2: var(--blue); --brand-3: var(--sapphire);
+  --shadow-rgb: 34, 39, 42;
+  --shadow-1: 0 1px 2px rgba(var(--shadow-rgb), 0.12);
+  --shadow-2: 0 2px 10px rgba(var(--shadow-rgb), 0.16);
+  --shadow-3: 0 12px 32px rgba(var(--shadow-rgb), 0.2);
+  --shadow: 0 18px 50px rgba(var(--shadow-rgb), 0.22);
+  --sheen: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  --scrim: rgba(34, 39, 42, 0.28);
+}
+
+:root[data-theme='aspen'] {
+  /* Aspen: warm cream, gold. */
+  color-scheme: light;
+  --ground: #F4ECD8; --panel: #FBF4E4; --surface: #EBE1C8; --surface-2: #CEC1A2; --crust: #EDE3CC; --line: #DDD1B5;
+  --overlay: #9A8C6A; --subtle: #897B57; --ink: #3C2D21; --muted: #6E6056;
+  --accent: var(--yellow); --accent-ink: #FFFFFF; --accent-soft: #ECDEC2;
+  --ok: var(--green); --err: var(--red); --warn: var(--peach); --info: var(--blue);
+  --red: #C6373F; --maroon: #B75962; --peach: #AC5703; --yellow: #976203; --green: #327E18; --teal: #037C66;
+  --sky: #018A98; --sapphire: #02779F; --blue: #396DBE; --lavender: #7471B5; --mauve: #8B57AC; --pink: #B05980;
+  --flamingo: #A87269; --rosewater: #9A7767;
+  --brand-1: var(--lavender); --brand-2: var(--blue); --brand-3: var(--sapphire);
+  --shadow-rgb: 60, 45, 33;
+  --shadow-1: 0 1px 2px rgba(var(--shadow-rgb), 0.12);
+  --shadow-2: 0 2px 10px rgba(var(--shadow-rgb), 0.16);
+  --shadow-3: 0 12px 32px rgba(var(--shadow-rgb), 0.2);
+  --shadow: 0 18px 50px rgba(var(--shadow-rgb), 0.22);
+  --sheen: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  --scrim: rgba(60, 45, 33, 0.28);
+}
+
+:root[data-theme='meadow'] {
+  /* Meadow: soft green paper, forest. */
+  color-scheme: light;
+  --ground: #E8F0E4; --panel: #F1F7EE; --surface: #DCE5D7; --surface-2: #BBC7B5; --crust: #DFE8DA; --line: #CCD7C6;
+  --overlay: #85927E; --subtle: #718069; --ink: #233226; --muted: #576459;
+  --accent: var(--green); --accent-ink: #FFFFFF; --accent-soft: #D1E4D3;
+  --ok: var(--green); --err: var(--red); --warn: var(--peach); --info: var(--blue);
+  --red: #BC3E43; --maroon: #AB5C65; --peach: #A95A00; --yellow: #987E00; --green: #1B763A; --teal: #027D6C;
+  --sky: #008794; --sapphire: #03789B; --blue: #1E6FC3; --lavender: #6571B7; --mauve: #7F58AD; --pink: #A55C82;
+  --flamingo: #9E776F; --rosewater: #917C6C;
+  --brand-1: var(--lavender); --brand-2: var(--blue); --brand-3: var(--sapphire);
+  --shadow-rgb: 35, 50, 38;
+  --shadow-1: 0 1px 2px rgba(var(--shadow-rgb), 0.12);
+  --shadow-2: 0 2px 10px rgba(var(--shadow-rgb), 0.16);
+  --shadow-3: 0 12px 32px rgba(var(--shadow-rgb), 0.2);
+  --shadow: 0 18px 50px rgba(var(--shadow-rgb), 0.22);
+  --sheen: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  --scrim: rgba(35, 50, 38, 0.28);
+}
+
+/* ---- Everything below is the same in every look ---------------------------------------------------------- */
+:root {
+  /* Mixed colors, worked out from the roles so they follow the look */
+  --line-soft: color-mix(in srgb, var(--line) 55%, transparent);     /* hairlines inside a window: thin, not chunky */
+  --hover: color-mix(in srgb, var(--surface) 70%, transparent);      /* pointing at something */
+  --fill-soft: color-mix(in srgb, var(--ink) 5%, transparent);       /* clean look: a quiet fill that stands in for an outline */
+  --fill-hover: color-mix(in srgb, var(--ink) 9%, transparent);      /* clean look: that fill when you point at it */
+  --line-faint: color-mix(in srgb, var(--ink) 8%, transparent);      /* clean look: the divider between rows in a list */
+  --pressed: color-mix(in srgb, var(--surface-2) 45%, var(--surface)); /* holding it down */
+  --well: color-mix(in srgb, var(--ground) 70%, var(--surface));     /* sunken track: slider switch, segmented control */
+  --field: color-mix(in srgb, var(--ground) 60%, var(--panel));      /* text boxes */
+  --accent-hover: color-mix(in srgb, var(--accent) 88%, white);
+  --accent-line: color-mix(in srgb, var(--accent) 55%, transparent);
+  --ok-soft: color-mix(in srgb, var(--ok) 16%, transparent);
+  --err-soft: color-mix(in srgb, var(--err) 16%, transparent);
+  --warn-soft: color-mix(in srgb, var(--warn) 16%, transparent);
+  --info-soft: color-mix(in srgb, var(--info) 16%, transparent);
+  --focus: 0 0 0 2px var(--panel), 0 0 0 4px var(--accent-line);     /* focus ring as a shadow, follows round corners */
+
+  /* Code colors (Catppuccin's own style guide for code). Built from the named colors, so every look gets its own set. */
+  --syn-keyword: var(--mauve);      /* if, for, return, def, class, import */
+  --syn-string: var(--green);       /* "text" */
+  --syn-escape: var(--pink);        /* \n, regex */
+  --syn-comment: var(--overlay);    /* // notes in code */
+  --syn-number: var(--peach);       /* 42, true, null */
+  --syn-type: var(--yellow);        /* String, int, class names */
+  --syn-function: var(--blue);      /* print(), fetch() */
+  --syn-property: var(--lavender);  /* obj.name, CSS properties */
+  --syn-variable: var(--ink);       /* plain names */
+  --syn-builtin: var(--red);        /* self, this, built-ins */
+  --syn-operator: var(--sky);       /* = + => && */
+  --syn-punct: color-mix(in srgb, var(--ink) 60%, var(--overlay)); /* ( ) { } ; , */
+  --syn-tag: var(--blue);           /* <div> */
+  --syn-attr: var(--yellow);        /* class="..." */
+  --syn-meta: var(--pink);          /* #include, @decorator */
+  --syn-added: var(--green); --syn-removed: var(--red);
+  --code-bg: var(--crust);          /* the box code sits in */
+
+  /* Fixed colors that never follow the look. Only for things that must stay white or black whatever the look is. */
+  --paper: #FFFFFF;  /* always white: QR codes, printed pages, words and buttons on top of a video or photo */
+  --shade: #000000;  /* always black: behind a video, and the dark fade under controls that sit on a picture */
+
+  /* Corners. Pick by what the thing IS, not by what looks close. */
+  --r-xs: 4px;     /* tiny marks: checkbox, inline code, small tags */
+  --r-sm: 8px;     /* small things inside a control: menu rows, the x on a tab */
+  --r-md: 10px;    /* controls: buttons, text boxes, dropdowns, list rows */
+  --r-lg: 14px;    /* cards, menus, popovers, toasts */
+  --r-xl: 18px;    /* windows: dialogs, settings, main panes */
+  --r-2xl: 24px;   /* big feature cards */
+  --r-pill: 999px; /* pills, chips, switches */
+  --r-window: 12px; /* the app window's own corner */
+
+  /* Spacing steps (4px grid) */
+  --sp-1: 4px; --sp-2: 8px; --sp-3: 12px; --sp-4: 16px; --sp-5: 20px; --sp-6: 24px; --sp-8: 32px; --sp-10: 40px;
+
+  /* Control heights */
+  --h-xs: 24px; --h-sm: 28px; --h-md: 32px; --h-btn: 36px; --h-lg: 40px;
+  /* Fixed sizes of a few parts, as variables so touch sizes (below) can raise them. */
+  --h-row: 30px;      /* a menu row */
+  --h-seg: 26px;      /* a button inside .segmented */
+  --h-search: 34px;   /* .searchbox */
+  --h-nav: 34px;      /* .navbtn (side menus, settings list) */
+  --h-field: 46px;    /* a settings row (.field) */
+  --sw-w: 38px; --sw-h: 22px; /* on / off switch */
+  --tick: 16px;       /* tick box and round option */
+  --h-fab: 56px;      /* the round floating "add" button (.fab) */
+  --fs-field: 1em;    /* text inside text boxes and dropdowns */
+
+  /* Type. --tx is the app's text size setting (1 = normal); apps that don't have one just leave it alone. */
+  --font-ui: 'IBM Plex Sans', 'Segoe UI', system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', Consolas, 'SF Mono', monospace;
+  --fs-2xs: calc(11px * var(--tx, 1)); --fs-xs: calc(12px * var(--tx, 1)); --fs-sm: calc(13px * var(--tx, 1));
+  --fs-md: calc(14px * var(--tx, 1));  --fs-lg: calc(16px * var(--tx, 1)); --fs-xl: calc(20px * var(--tx, 1));
+  --fs-2xl: calc(24px * var(--tx, 1)); --fs-3xl: calc(28px * var(--tx, 1));
+  --fw-normal: 400; --fw-medium: 500; --fw-bold: 600;
+
+  /* Motion: quick and calm. Nothing bounces. */
+  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --dur-1: 120ms; /* hover, press */
+  --dur-2: 180ms; /* switches, menus and dialogs opening */
+  --dur-3: 280ms; /* panels sliding */
+
+  /* Layers */
+  --z-sticky: 20; --z-modal: 50; --z-pop: 60; --z-toast: 70;
+}
+
+/* ---- Touch sizes (opt-in) ------------------------------------------------------------------------------------
+   Bigger controls for fingers, and 16px text in text boxes (anything smaller makes an iPhone zoom in when you tap it).
+   <html data-size="touch"> = always;  data-size="auto" = only on a touch screen (phones, tablets).
+   Leave data-size off and nothing changes. Every part sized with --h-* follows on its own. */
+:root[data-size='touch'] {
+  --h-xs: 32px; --h-sm: 36px; --h-md: 44px; --h-btn: 44px; --h-lg: 48px;
+  --h-row: 44px; --h-seg: 38px; --h-search: 44px; --h-nav: 44px; --h-field: 56px;
+  --sw-w: 48px; --sw-h: 28px; --tick: 22px; --fs-field: 16px;
+}
+@media (pointer: coarse) {
+  :root[data-size='auto'] {
+    --h-xs: 32px; --h-sm: 36px; --h-md: 44px; --h-btn: 44px; --h-lg: 48px;
+    --h-row: 44px; --h-seg: 38px; --h-search: 44px; --h-nav: 44px; --h-field: 56px;
+    --sw-w: 48px; --sw-h: 28px; --tick: 22px; --fs-field: 16px;
+  }
+}

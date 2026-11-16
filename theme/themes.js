@@ -1,0 +1,75 @@
+// The list of looks and three small helpers, for apps with no build step (and for preview.html).
+//   <script src="theme/themes.js"></script>   then:   Themes.apply('spruce');   Themes.picker(el, { value, onPick });
+// Apps with a build step (Vite, Next) import themes.json instead and draw the same picker themselves (see README).
+// The list between the <list> marks is written by:  node theme/check.mjs --fix   (names live in themes.json).
+(function (g) {
+  // <list> written by check.mjs, do not edit by hand
+  const THEMES = [
+    {"id":"mocha","name":"Mocha","mode":"dark","about":"Catppuccin Mocha, the home look","swatch":{"ground":"#181825","panel":"#1E1E2E","surface":"#313244","line":"#45475A","ink":"#CDD6F4","muted":"#A6ADC8","accent":"#CBA6F7","accentInk":"#11111B","accentSoft":"#3A3350"}},
+    {"id":"dark","name":"Dark","mode":"dark","about":"Plain gray, blue","swatch":{"ground":"#181818","panel":"#1F1F1F","surface":"#2C2C2C","line":"#3A3A3A","ink":"#E8E8E8","muted":"#A3A3A3","accent":"#5B9BF8","accentInk":"#0B0B0B","accentSoft":"#22344D"}},
+    {"id":"black","name":"Black","mode":"dark","about":"True black, for OLED screens","swatch":{"ground":"#000000","panel":"#0A0A0A","surface":"#1A1A1A","line":"#2A2A2A","ink":"#F2F2F2","muted":"#9C9C9C","accent":"#FFFFFF","accentInk":"#000000","accentSoft":"#262626"}},
+    {"id":"wasatch","name":"Wasatch","mode":"dark","about":"Cool slate, ice blue","swatch":{"ground":"#1B2530","panel":"#202C39","surface":"#334150","line":"#485667","ink":"#D4E2EC","muted":"#AFB8C4","accent":"#80C8EE","accentInk":"#151D27","accentSoft":"#334B5D"}},
+    {"id":"midnight","name":"Midnight","mode":"dark","about":"Deep navy, bright blue","swatch":{"ground":"#081022","panel":"#0C162C","surface":"#1E2A42","line":"#313E59","ink":"#CDDAF1","muted":"#A6B1C7","accent":"#74ACFE","accentInk":"#040918","accentSoft":"#213456"}},
+    {"id":"glacier","name":"Glacier","mode":"dark","about":"Blue-green depths, cyan","swatch":{"ground":"#091D23","panel":"#0B242C","surface":"#1D3941","line":"#314E57","ink":"#CEE5E7","muted":"#A8BBC2","accent":"#6ADDD9","accentInk":"#05151B","accentSoft":"#1E494F"}},
+    {"id":"storm","name":"Storm","mode":"dark","about":"Graphite, electric violet","swatch":{"ground":"#121317","panel":"#18191E","surface":"#2A2C32","line":"#3F4147","ink":"#DBE0E9","muted":"#B4B7C0","accent":"#A2A8FE","accentInk":"#0B0C0F","accentSoft":"#34364B"}},
+    {"id":"alpenglow","name":"Alpenglow","mode":"dark","about":"Plum dusk, rose","swatch":{"ground":"#20131D","panel":"#281824","surface":"#3D2B39","line":"#533F4E","ink":"#E9D6E0","muted":"#BEAFBA","accent":"#F89EC1","accentInk":"#170C15","accentSoft":"#523343"}},
+    {"id":"redrock","name":"Redrock","mode":"dark","about":"Canyon brown, terracotta","swatch":{"ground":"#221311","panel":"#2B1916","surface":"#412B28","line":"#57403C","ink":"#E8D5C6","muted":"#C3ABA7","accent":"#EC8367","accentInk":"#190D0B","accentSoft":"#522E26"}},
+    {"id":"ember","name":"Ember","mode":"dark","about":"Warm charcoal, orange","swatch":{"ground":"#191511","panel":"#201A16","surface":"#342E29","line":"#49423D","ink":"#E6DBCA","muted":"#C0B1A6","accent":"#FFA245","accentInk":"#110D0B","accentSoft":"#4D351F"}},
+    {"id":"copper","name":"Copper","mode":"dark","about":"Shop gray, copper","swatch":{"ground":"#191A1C","panel":"#1F2123","surface":"#323437","line":"#47494D","ink":"#E2DBD4","muted":"#B9B3AD","accent":"#E09676","accentInk":"#111315","accentSoft":"#463834"}},
+    {"id":"basalt","name":"Basalt","mode":"dark","about":"Near black, gold","swatch":{"ground":"#0E0D0A","panel":"#141310","surface":"#272522","line":"#3B3935","ink":"#EAE6DB","muted":"#C1BDB4","accent":"#F3CD5F","accentInk":"#070605","accentSoft":"#413820"}},
+    {"id":"spruce","name":"Spruce","mode":"dark","about":"Deep evergreen, mint","swatch":{"ground":"#0E1B16","panel":"#12221C","surface":"#25362F","line":"#394B44","ink":"#D1E1D4","muted":"#A6B9B1","accent":"#7FD899","accentInk":"#08130F","accentSoft":"#284635"}},
+    {"id":"sagebrush","name":"Sagebrush","mode":"dark","about":"Soft gray-green, sage","swatch":{"ground":"#212620","panel":"#272D25","surface":"#3B4139","line":"#50574E","ink":"#D5D4BE","muted":"#A4B1A0","accent":"#A3C790","accentInk":"#1A1E18","accentSoft":"#404C3A"}},
+    {"id":"latte","name":"Latte","mode":"light","about":"Catppuccin Latte, light","swatch":{"ground":"#E6E9EF","panel":"#EFF1F5","surface":"#DCE0E8","line":"#CCD0DA","ink":"#4C4F69","muted":"#6C6F85","accent":"#8839EF","accentInk":"#FFFFFF","accentSoft":"#E3D5FB"}},
+    {"id":"powder","name":"Powder","mode":"light","about":"Clean white, blue","swatch":{"ground":"#EAEFF5","panel":"#F3F7FC","surface":"#DEE4EC","line":"#CDD5DE","ink":"#273042","muted":"#5B6474","accent":"#1266D4","accentInk":"#FFFFFF","accentSoft":"#D1E1F6"}},
+    {"id":"bonneville","name":"Bonneville","mode":"light","about":"Salt-flat gray, teal","swatch":{"ground":"#EFF3F4","panel":"#F7FBFC","surface":"#E2E8E9","line":"#D2D9DA","ink":"#22272A","muted":"#54595C","accent":"#01787A","accentInk":"#FFFFFF","accentSoft":"#D2E7E8"}},
+    {"id":"aspen","name":"Aspen","mode":"light","about":"Warm cream, gold","swatch":{"ground":"#F4ECD8","panel":"#FBF4E4","surface":"#EBE1C8","line":"#DDD1B5","ink":"#3C2D21","muted":"#6E6056","accent":"#976203","accentInk":"#FFFFFF","accentSoft":"#ECDEC2"}},
+    {"id":"meadow","name":"Meadow","mode":"light","about":"Soft green paper, forest","swatch":{"ground":"#E8F0E4","panel":"#F1F7EE","surface":"#DCE5D7","line":"#CCD7C6","ink":"#233226","muted":"#576459","accent":"#1B763A","accentInk":"#FFFFFF","accentSoft":"#D1E4D3"}}
+  ];
+  // </list>
+
+  const find = (id) => THEMES.find((t) => t.id === id) || THEMES[0];
+
+  /** Switch the look. Sets data-theme and data-mode on <html> and returns the look (so the app can turn glass off for light ones). */
+  function apply(id, root) {
+    const t = find(id);
+    const el = root || document.documentElement;
+    el.dataset.theme = t.id;
+    el.dataset.mode = t.mode;
+    return t;
+  }
+
+  /** One card of the picker, as HTML. The colors ride along as variables, so a card shows its own look in any look. */
+  function card(t, picked) {
+    const s = t.swatch;
+    const vars = `--tg:${s.ground};--tp:${s.panel};--ts:${s.surface};--tl:${s.line};--ti:${s.ink};--tm:${s.muted};--ta:${s.accent}`;
+    return `<button type="button" class="themecard${picked ? ' on' : ''}" data-theme-id="${t.id}" aria-pressed="${picked}" style="${vars}">`
+      + '<span class="themeprev"><span class="tside"><i></i><i></i><i></i></span><span class="tpane"><i></i><i></i><i></i><b></b></span></span>'
+      + `<span class="themename">${t.name}</span><span class="themeabout">${t.about}</span></button>`;
+  }
+
+  /** Draw the theme picker into `host`. opts: value (picked id), filter ('all' | 'dark' | 'light'), onPick(id, look). */
+  function picker(host, opts) {
+    const o = opts || {};
+    let value = o.value || THEMES[0].id;
+    let filter = o.filter || 'all';
+    const draw = () => {
+      const shown = THEMES.filter((t) => filter === 'all' || t.mode === filter);
+      host.innerHTML = '<div class="themepick"><div class="themebar"><div class="segmented">'
+        + ['all', 'dark', 'light'].map((f) => `<button type="button" data-filter="${f}" class="${f === filter ? 'on' : ''}">${f[0].toUpperCase() + f.slice(1)}</button>`).join('')
+        + `</div><span class="hint">${shown.length} themes</span></div><div class="themegrid">${shown.map((t) => card(t, t.id === value)).join('')}</div></div>`;
+    };
+    host.addEventListener('click', (e) => {
+      const f = e.target.closest('[data-filter]');
+      if (f) { filter = f.dataset.filter; draw(); return; }
+      const c = e.target.closest('[data-theme-id]');
+      if (!c) return;
+      value = c.dataset.themeId;
+      draw();
+      if (o.onPick) o.onPick(value, find(value));
+    });
+    draw();
+    return { set(id) { value = id; draw(); } };
+  }
+
+  g.Themes = { list: THEMES, find, apply, card, picker };
+})(typeof window !== 'undefined' ? window : globalThis);
