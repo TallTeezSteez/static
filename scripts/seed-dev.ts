@@ -26,12 +26,12 @@ async function main() {
   await pool.query(`truncate ${TABLES.join(', ')} restart identity`);
   const now = Date.now();
   const videos: Video[] = [];
-  for (let i = 0; i < 160; i++) {
+  for (let i = 0; i < 480; i++) {
     const [title, dur] = TITLES[i % TITLES.length];
     videos.push({
       id: `seed${String(i).padStart(7, '0')}`, channelId: chan(i % 60), channelTitle: `Channel ${i % 60}`, title: i < TITLES.length ? title : `${title} (${Math.floor(i / TITLES.length) + 1})`,
       description: '', publishedAt: new Date(now - (i % 20) * 86400_000 - 3600_000).toISOString(), durationS: dur + (i % 7) * 60, views: 20_000 + i * 9000,
-      categoryId: '28', tags: '', embeddable: i % 23 !== 0, liveState: 'none', scheduledStart: null, liveViewers: null, thumb: thumb(i, title.slice(0, 26)),
+      categoryId: '28', tags: '', embeddable: i % 23 !== 0, liveState: 'none', scheduledStart: null, liveViewers: null, madeForKids: false, lang: '', thumb: thumb(i, title.slice(0, 26)),
     });
   }
   await upsertVideos(db, videos, DEFAULT_TOPICS, 'uploads');

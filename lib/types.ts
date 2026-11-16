@@ -33,6 +33,8 @@ export type Video = {
   liveState: 'none' | 'live' | 'upcoming';
   scheduledStart: string | null;
   liveViewers: number | null;
+  madeForKids: boolean;
+  lang: string; // spoken language as YouTube reports it ("en", "en-US", "hi"), or '' when it doesn't say
   thumb: string;
 };
 
@@ -76,6 +78,7 @@ export type Settings = {
   topics: Topic[];
   shows: Show[];
   nflLink: string;
+  blockWords: string[]; // a video with one of these in its title or channel name is never offered
 };
 
 export type Secrets = {

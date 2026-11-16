@@ -164,7 +164,7 @@ export async function buildEdition(deps: Deps): Promise<Edition> {
     [new Date(now.getTime() - 7 * 86400_000)]);
   const all = recent.rows.map(toArticle);
   const dayAndHalf = now.getTime() - 36 * 3600_000;
-  const candidates = await loadCandidates(db);
+  const candidates = await loadCandidates(db, settings.blockWords);
   const used = new Set<string>();
   const sections: Edition['sections'] = [];
   for (const sec of SECTIONS) {

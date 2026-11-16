@@ -59,7 +59,7 @@ export function scoreVideo(c: Candidate, now: Date): Scored {
   return { ...c, score, reason, isNew };
 }
 
-export type PickSetOpts = { n: number; mixNew: number; rng: () => number; maxPerTopic?: number };
+export type PickSetOpts = { n: number; mixNew: number; rng: () => number; maxPerTopic?: number; maxPerChannel?: number };
 
 /** Draws one from near the top of a sorted list, so a reroll isn't the same list again. */
 function drawNearTop<T>(sorted: T[], rng: () => number): number {
@@ -71,7 +71,7 @@ function drawNearTop<T>(sorted: T[], rng: () => number): number {
 }
 
 /**
- * Chooses n videos: at most one per channel, with `mixNew` of the seats going to new-to-you channels
+ * Chooses n videos: at most one per channel (or `maxPerChannel`), with `mixNew` of the seats going to new-to-you channels
  * when there are enough of them. Whatever one side can't fill, the other side fills.
  */
 export function pickSet(cands: Scored[], opts: PickSetOpts): Scored[] {
@@ -82,10 +82,11 @@ export function pickSet(cands: Scored[], opts: PickSetOpts): Scored[] {
   for (let i = 0; i < opts.n; i++) seats.push(i < wantNew ? 'new' : 'known');
 
   const out: Scored[] = [];
-  const usedChannels = new Set<string>();
+  const perChannel = opts.maxPerChannel ?? 1;
+  const usedChannels = new Map<string, number>();
   const topicCount = new Map<string, number>();
   const allowed = (c: Scored, strictTopics: boolean) => {
-    if (usedChannels.has(c.channelId)) return false;
+    if ((usedChannels.get(c.channelId) || 0) >= perChannel) return false;
     if (strictTopics && opts.maxPerTopic && c.topics.length > 0 && c.topics.every((t) => (topicCount.get(t) || 0) >= opts.maxPerTopic!)) return false;
     return true;
   };
@@ -94,7 +95,7 @@ export function pickSet(cands: Scored[], opts: PickSetOpts): Scored[] {
     if (pool.length === 0) return false;
     const chosen = pool[drawNearTop(pool, opts.rng)];
     pools[kind] = pools[kind].filter((c) => c.id !== chosen.id);
-    usedChannels.add(chosen.channelId);
+    usedChannels.set(chosen.channelId, (usedChannels.get(chosen.channelId) || 0) + 1);
     for (const t of chosen.topics) topicCount.set(t, (topicCount.get(t) || 0) + 1);
     out.push(chosen);
     return true;

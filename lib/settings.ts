@@ -1,6 +1,7 @@
 import type { Db, Secrets, Settings, Show, Topic } from './types';
 import { kvGet, kvSet } from './db';
 import { DEFAULT_TOPICS } from './topics';
+import { DEFAULT_BLOCK_WORDS } from './quality';
 
 export const DEFAULT_SHOWS: Show[] = [
   {
@@ -23,6 +24,7 @@ export const DEFAULT_SETTINGS: Settings = {
   topics: DEFAULT_TOPICS,
   shows: DEFAULT_SHOWS,
   nflLink: 'https://www.youtube.com/results?search_query=NFL+Sunday+Ticket',
+  blockWords: DEFAULT_BLOCK_WORDS,
 };
 
 const str = (v: unknown, max = 200): string | null => (typeof v === 'string' ? v.slice(0, max) : null);
@@ -83,6 +85,7 @@ export function mergeSettings(current: Settings, patch: any): Settings {
     const topics = patch.topics.map(cleanTopic).filter((t: Topic | null): t is Topic => !!t).slice(0, 20);
     if (topics.length) next.topics = topics;
   }
+  if (Array.isArray(patch.blockWords)) next.blockWords = [...new Set(strList(patch.blockWords, 300, 1000).map((w) => w.toLowerCase()).filter((w) => w.length <= 60))];
   if (Array.isArray(patch.shows)) next.shows = patch.shows.map(cleanShow).filter((s: Show | null): s is Show => !!s).slice(0, 40);
   return next;
 }

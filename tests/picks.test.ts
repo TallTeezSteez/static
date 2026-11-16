@@ -168,11 +168,11 @@ describe('picks from the catalog', () => {
     expect(ids).toEqual([vidId(0), vidId(1)]);
   });
 
-  it('builds the home screen: six for tonight, shelves with no repeats of tonight', async () => {
-    await seed(spread(40, (i) => ({ title: i % 2 ? `True crime case ${i}` : `AI agents build ${i}` })), 'ABCDEFGH');
+  it('builds the home screen: a dozen for tonight, shelves with no repeats of tonight', async () => {
+    await seed(spread(160, (i) => ({ title: i % 2 ? `True crime case ${i}` : `AI agents build ${i}` })), 'ABCDEFGH');
     const home = (await call(deps, 'GET', '/api/home', undefined, cookie)).body;
-    expect(home.tonight).toHaveLength(6);
-    expect(home.counts).toEqual({ catalog: 40, channels: 8, seen: 0 });
+    expect(home.tonight).toHaveLength(12);
+    expect(home.counts).toEqual({ catalog: 160, channels: 8, seen: 0 });
     const tonightIds = home.tonight.map((p: any) => p.id);
     const shelfIds = home.shelves.flatMap((s: any) => s.picks.map((p: any) => p.id));
     expect(shelfIds.filter((id: string) => tonightIds.includes(id))).toEqual([]);

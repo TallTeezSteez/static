@@ -60,7 +60,7 @@ export function video(over: Partial<Video> & { id: string }): Video {
   return {
     channelId: 'UC' + 'A'.repeat(22), channelTitle: 'Chan A', title: 'A video', description: '',
     publishedAt: new Date(NOW.getTime() - 2 * 86400_000).toISOString(), durationS: 1500, views: 50_000, categoryId: '28', tags: '',
-    embeddable: true, liveState: 'none', scheduledStart: null, liveViewers: null, thumb: 'https://i.ytimg.com/vi/x/mqdefault.jpg',
+    embeddable: true, liveState: 'none', scheduledStart: null, liveViewers: null, madeForKids: false, lang: '', thumb: 'https://i.ytimg.com/vi/x/mqdefault.jpg',
     ...over,
   };
 }

@@ -39,6 +39,9 @@ create table if not exists articles (
   section text not null, source text not null default '', saved boolean not null default false,
   read boolean not null default false, fetched_at timestamptz not null default now());
 create index if not exists articles_pub on articles(published_at desc);
+alter table videos add column if not exists made_for_kids boolean not null default false;
+alter table videos add column if not exists lang text not null default '';
+alter table channels add column if not exists topic text;
 create table if not exists gather_log (
   id serial primary key, kind text not null, started_at timestamptz not null, finished_at timestamptz,
   ok boolean, detail jsonb);
