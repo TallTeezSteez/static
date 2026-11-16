@@ -1,5 +1,5 @@
 import type { Db, Deps, Pick } from './types';
-import { kvGet, kvSet } from './db';
+import { jsonParam, kvGet, kvSet, safeText } from './db';
 import { loadSettings } from './settings';
 import { loadCandidates, selectPicks } from './picks';
 import { feedTitle, parseFeed } from './rss';
@@ -57,7 +57,7 @@ export async function seedFeeds(db: Db): Promise<void> {
   await db.query(
     `insert into feeds (url, title, section) select x.url, x.title, x.section
      from jsonb_to_recordset($1::jsonb) as x(url text, title text, section text) on conflict (url) do nothing`,
-    [JSON.stringify(DEFAULT_FEEDS)]);
+    [jsonParam(DEFAULT_FEEDS)]);
   await kvSet(db, 'feeds:seeded', true);
 }
 
@@ -101,14 +101,14 @@ export async function refreshFeeds(deps: Deps, opts: { force?: boolean } = {}): 
         const xml = await res.text();
         const items = parseFeed(xml, feed.url).slice(0, 30);
         if (items.length === 0) throw new Error('no articles found');
-        const source = feed.title || feedTitle(xml) || new URL(feed.url).hostname;
+        const source = safeText(feed.title || feedTitle(xml) || new URL(feed.url).hostname);
         const rows = items.map((it) => ({ ...it, url: it.url.slice(0, 1000), title: it.title.slice(0, 300) }));
         const ins = await db.query(
           `insert into articles (feed_id, url, title, summary, image, published_at, section, source)
            select $2, x.url, x.title, x.summary, x.image, coalesce(x."publishedAt", $5), $3, $4
            from jsonb_to_recordset($1::jsonb) as x(url text, title text, summary text, image text, "publishedAt" timestamptz)
            on conflict (url) do nothing returning id`,
-          [JSON.stringify(rows), feed.id, feed.section, source, now]);
+          [jsonParam(rows), feed.id, feed.section, source, now]);
         result.added += ins.rows.length;
         result.ok += 1;
         await db.query(`update feeds set checked_at = $2, last_ok = $2, last_error = null, title = case when title = '' then $3 else title end where id = $1`, [feed.id, now, source]);

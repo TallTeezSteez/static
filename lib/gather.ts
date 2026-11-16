@@ -1,5 +1,5 @@
 import type { Db, Deps, Topic, Video } from './types';
-import { kvGet, kvSet } from './db';
+import { jsonParam, kvGet, kvSet } from './db';
 import { loadSecrets, loadSettings } from './settings';
 import { classify } from './topics';
 import { QuotaError, YouTube } from './youtube';
@@ -47,7 +47,7 @@ export async function upsertVideos(db: Db, videos: Video[], topics: Topic[], sou
          live_state = excluded.live_state, scheduled_start = excluded.scheduled_start, thumb = excluded.thumb,
          topics = (select coalesce(array_agg(distinct t), '{}') from unnest(videos.topics || excluded.topics) as t),
          fetched_at = now()`,
-      [JSON.stringify(rows)],
+      [jsonParam(rows)],
     );
   }
 }
@@ -146,7 +146,7 @@ async function gatherSearch(deps: Deps, yt: YouTube, topics: Topic[]): Promise<{
         await db.query(
           `insert into channels (id, title, source) select x.id, x.title, 'search'
            from jsonb_to_recordset($1::jsonb) as x(id text, title text) on conflict (id) do nothing`,
-          [JSON.stringify(chans.map(([id, title]) => ({ id, title })))],
+          [jsonParam(chans.map(([id, title]) => ({ id, title })))],
         );
       }
     }
@@ -156,7 +156,7 @@ async function gatherSearch(deps: Deps, yt: YouTube, topics: Topic[]): Promise<{
       await db.query(
         `update videos v set topics = (select coalesce(array_agg(distinct t), '{}') from unnest(v.topics || array[x.topic]) as t)
          from jsonb_to_recordset($1::jsonb) as x(id text, topic text) where v.id = x.id`,
-        [JSON.stringify(knownHits.map(([id, topic]) => ({ id, topic })))],
+        [jsonParam(knownHits.map(([id, topic]) => ({ id, topic })))],
       );
     }
   } catch (e) {
@@ -199,7 +199,7 @@ export async function runGather(deps: Deps, opts: { force?: boolean; kinds?: ('u
     }
     await kvSet(db, key, { at: started.toISOString() });
     await db.query('insert into gather_log (kind, started_at, finished_at, ok, detail) values ($1, $2, $3, $4, $5::jsonb)',
-      [kind, started, deps.now(), !error, JSON.stringify({ ...(detail || {}), error, calls: yt.calls })]);
+      [kind, started, deps.now(), !error, jsonParam({ ...(detail || {}), error, calls: yt.calls })]);
     if (error) { result.error = error; break; } // out of quota: the next kind would fail too
   }
   return result;

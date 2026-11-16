@@ -36,6 +36,19 @@ export function ensureMigrated(db: Db): Promise<void> {
   return migrated;
 }
 
+/**
+ * Text that Postgres will accept. Trimming text to a length can slice an emoji in half, and Postgres refuses
+ * half an emoji (and the null character) inside JSON. Halves become the "unknown character" mark; nulls go.
+ */
+export function safeText(s: string): string {
+  return s.replace(/\u0000/g, '').toWellFormed();
+}
+
+/** JSON for a database parameter, with every string inside made safe. Use this, never bare JSON.stringify. */
+export function jsonParam(value: unknown): string {
+  return JSON.stringify(value, (_key, v) => (typeof v === 'string' ? safeText(v) : v));
+}
+
 export async function kvGet<T>(db: Db, key: string): Promise<T | null> {
   const r = await db.query<{ value: T }>('select value from kv where key = $1', [key]);
   return r.rows[0]?.value ?? null;
@@ -45,6 +58,6 @@ export async function kvSet(db: Db, key: string, value: unknown): Promise<void> 
   await db.query(
     `insert into kv (key, value, updated_at) values ($1, $2::jsonb, now())
      on conflict (key) do update set value = excluded.value, updated_at = now()`,
-    [key, JSON.stringify(value)],
+    [key, jsonParam(value)],
   );
 }

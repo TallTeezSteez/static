@@ -185,6 +185,26 @@ describe('gathering', () => {
     expect(log.rows[0].detail.error).toBe('YouTube daily limit reached');
   });
 
+  it('stores videos whose text has an emoji cut in half or a stray null character', async () => {
+    // YouTube text is trimmed to a length, which can slice an emoji in two. Postgres refuses half an emoji in JSON.
+    await saveSecrets(db, { youtubeKey: 'KEY' });
+    await addChannel('A');
+    const halfEmoji = 'Great hunt \ud83e'; // first half of an emoji, as left by a cut
+    const f = fakeFetch([
+      ['playlistItems', () => ({ items: [{ contentDetails: { videoId: 'emojiAAAAAA' } }, { contentDetails: { videoId: 'nullAAAAAAA' } }] })],
+      ['/videos', () => ({ items: [
+        { ...apiVideo('emojiAAAAAA', { title: halfEmoji }), snippet: { ...apiVideo('emojiAAAAAA', { title: halfEmoji }).snippet, description: 'x'.repeat(599) + '\ud83e\udd8c tail', tags: [halfEmoji] } },
+        apiVideo('nullAAAAAAA', { title: 'Bad\u0000byte' }),
+      ] })],
+    ]);
+    const r = await runGather(makeDeps(db, { fetch: f }), { kinds: ['uploads'] });
+    expect(r.error).toBeUndefined();
+    expect(r.uploads).toEqual({ channels: 1, videos: 2 });
+    const rows = (await db.query('select id, title, description from videos order by id')).rows;
+    expect(rows.map((x: any) => x.title)).toEqual(['Great hunt \ufffd', 'Badbyte']);
+    expect(rows[0].description).toHaveLength(600);
+  });
+
   it('flags a channel that has a live stream', async () => {
     await saveSecrets(db, { youtubeKey: 'KEY' });
     await addChannel('A');

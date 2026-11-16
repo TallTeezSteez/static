@@ -123,6 +123,14 @@ describe('the paper', () => {
       { label: 'Today', high: 48, low: 30, words: 'Clear', rainChance: 0 }, { label: 'Tomorrow', high: 40, low: 25, words: 'Snow', rainChance: 70 }] });
   });
 
+  it('takes in an article whose summary was cut through an emoji', async () => {
+    await db.query(`insert into kv (key, value) values ('feeds:seeded', 'true')`);
+    await db.query(`insert into feeds (url, title, section) values ('https://ai.example/feed', 'AI Site', 'ai')`);
+    // one long unbroken run with an emoji at character 200, which is exactly where the summary gets cut
+    const f = fakeFetch([['ai.example', () => rss([{ title: 'Emoji story', link: 'https://ai.example/e', hours: 1, body: 'y'.repeat(199) + '\ud83e\udd8c' + 'z'.repeat(60) }])]]);
+    expect(await refreshFeeds(makeDeps(db, { fetch: f }))).toEqual({ checked: 1, ok: 1, failed: 0, added: 1 });
+  });
+
   it('still prints when the weather service is down', async () => {
     await db.query(`insert into kv (key, value) values ('feeds:seeded', 'true')`);
     const ed = await buildEdition(makeDeps(db));

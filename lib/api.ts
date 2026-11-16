@@ -1,6 +1,6 @@
 import type { Deps, TimeBucket } from './types';
 import { COOKIE, checkPassword, checkSession, createSession, dropSession, hasPassword, readCookie, sessionCookie, setPassword } from './auth';
-import { kvGet, kvSet } from './db';
+import { jsonParam, kvGet, kvSet } from './db';
 import { applyEvent, getLibrary } from './events';
 import { pruneCatalog, runGather } from './gather';
 import { getLive } from './live';
@@ -99,7 +99,7 @@ const PRIVATE: Record<string, Handler> = {
           `insert into channels (id, title, source, subscribed) select x.id, x.title, 'sub', true
            from jsonb_to_recordset($1::jsonb) as x(id text, title text)
            on conflict (id) do update set subscribed = true, title = case when excluded.title <> '' then excluded.title else channels.title end`,
-          [JSON.stringify(rows)]);
+          [jsonParam(rows)]);
       }
       counts.subscriptions = rows.length;
     }
@@ -119,7 +119,7 @@ const PRIVATE: Record<string, Handler> = {
              recent_count = greatest(channels.recent_count, excluded.recent_count),
              last_watched = greatest(channels.last_watched, excluded.last_watched),
              title = case when channels.title = '' then excluded.title else channels.title end`,
-          [JSON.stringify(rows)]);
+          [jsonParam(rows)]);
       }
       counts.channels = rows.length;
     }
@@ -130,7 +130,7 @@ const PRIVATE: Record<string, Handler> = {
         await c.db.query(
           `insert into seen (video_id, at, source) select x.id, x.at, 'import'
            from jsonb_to_recordset($1::jsonb) as x(id text, at timestamptz) on conflict (video_id) do nothing`,
-          [JSON.stringify(rows)]);
+          [jsonParam(rows)]);
       }
       counts.seen = rows.length;
     }
