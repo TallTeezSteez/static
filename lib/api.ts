@@ -147,7 +147,7 @@ const PRIVATE: Record<string, Handler> = {
       shelf: p.get('shelf') || undefined,
       time: time === 'short' || time === 'hour' || time === 'long' ? (time as TimeBucket) : undefined,
       n: p.get('n') ? Number(p.get('n')) : undefined,
-      exclude: (p.get('exclude') || '').split(',').filter(Boolean).slice(0, 400),
+      exclude: (p.get('exclude') || '').split(',').filter(Boolean).slice(0, 600),
     }));
   },
 

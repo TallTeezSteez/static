@@ -26,12 +26,14 @@ export class YouTube {
     let body: any = null;
     try { body = await res.json(); } catch { /* not JSON */ }
     const reason: string = body?.error?.errors?.[0]?.reason || '';
-    if (res.status === 403 && /quota|rateLimit/i.test(reason)) throw new QuotaError();
+    // Google reports a used-up allowance two ways: the old 403 "quotaExceeded" and the newer 429 "Quota exceeded for…".
+    const message: string = body?.error?.message || '';
+    if ((res.status === 403 || res.status === 429) && (/quota|rateLimit/i.test(reason) || /quota/i.test(message))) throw new QuotaError();
     throw new YouTubeError(res.status, body?.error?.message || `YouTube answered ${res.status}`);
   }
 
   /** Newest video ids on a channel. Every channel has an uploads playlist: its id with "UC" swapped for "UU". */
-  async channelUploads(channelId: string, max = 8): Promise<string[]> {
+  async channelUploads(channelId: string, max = 12): Promise<string[]> {
     try {
       const data = await this.get('playlistItems', {
         part: 'contentDetails', playlistId: 'UU' + channelId.slice(2), maxResults: String(max),
@@ -98,6 +100,8 @@ function toVideo(it: any): Video {
     liveState,
     scheduledStart: live.scheduledStartTime || live.actualStartTime || null,
     liveViewers: live.concurrentViewers !== undefined ? Number(live.concurrentViewers) : null,
+    madeForKids: it.status?.madeForKids === true,
+    lang: String(sn.defaultAudioLanguage || sn.defaultLanguage || ''),
     thumb: (thumbs.medium || thumbs.high || thumbs.default || {}).url || `https://i.ytimg.com/vi/${it.id}/mqdefault.jpg`,
   };
 }

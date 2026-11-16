@@ -1,8 +1,9 @@
 import type { Db, Deps, Pick, Settings, TimeBucket } from './types';
 import { loadSettings } from './settings';
 import { pickSet, scoreVideo, type Candidate, type Scored } from './score';
+import { MIN_SECONDS, isJunk } from './quality';
 
-export const MIN_SECONDS = 180; // nothing shorter is ever picked: no Shorts
+export { MIN_SECONDS };
 const SHOWN_LIMIT = 5; // shown this many times without a click: stop offering it (unless the pool runs dry)
 
 const TIME_RANGES: Record<TimeBucket, [number, number]> = {
@@ -13,10 +14,11 @@ const TIME_RANGES: Record<TimeBucket, [number, number]> = {
 
 export type PickQuery = { shelf?: string; time?: TimeBucket; n?: number; exclude?: string[]; count?: boolean };
 
-/** Every video that may be offered at all: long enough, not seen, not turned down, channel not hidden. */
-export async function loadCandidates(db: Db): Promise<Candidate[]> {
+/** Every video that may be offered at all: long enough, not seen, not turned down, channel not hidden, not junk. */
+export async function loadCandidates(db: Db, blockWords: string[]): Promise<Candidate[]> {
   const r = await db.query<any>(
     `select v.id, v.title, v.channel_id, v.channel_title, v.duration_s, v.published_at, v.views, v.thumb, v.embeddable, v.topics,
+            v.made_for_kids, v.lang,
             coalesce(c.subscribed, false) as subscribed, coalesce(c.watch_count, 0) as watch_count,
             coalesce(c.recent_count, 0) as recent_count, coalesce(c.rating, 0) as rating,
             coalesce(s.shown, 0) as shown, coalesce(s.vote, 0) as vote, coalesce(s.progress_s, 0) as progress_s,
@@ -29,9 +31,11 @@ export async function loadCandidates(db: Db): Promise<Candidate[]> {
        and coalesce(s.skipped, false) = false and coalesce(s.vote, 0) >= 0
        and coalesce(c.hidden, false) = false
      order by v.published_at desc nulls last
-     limit 4000`,
+     limit 6000`,
   );
-  return r.rows.map(rowToCandidate);
+  return r.rows
+    .filter((x) => !isJunk({ title: x.title, channelTitle: x.channel_title, madeForKids: x.made_for_kids, lang: x.lang }, blockWords))
+    .map(rowToCandidate);
 }
 
 export function rowToCandidate(x: any): Candidate {
@@ -62,12 +66,18 @@ function fitsShelf(c: Candidate, shelf: string | undefined, settings: Settings):
 
 /** Chooses from candidates already in memory. Returns fewer than asked, with exhausted=true, when the pool runs dry. */
 export function selectPicks(all: Candidate[], q: PickQuery, settings: Settings, now: Date, rng: () => number): { picks: Pick[]; exhausted: boolean } {
-  const n = Math.min(24, Math.max(1, q.n ?? 6));
+  const n = Math.min(60, Math.max(1, q.n ?? 6));
   const exclude = new Set(q.exclude || []);
   const range = q.time ? TIME_RANGES[q.time] : null;
   const pool = all.filter((c) =>
     !exclude.has(c.id) && fitsShelf(c, q.shelf, settings) && (!range || (c.durationS >= range[0] && c.durationS < range[1])));
-  const opts = { n, mixNew: q.shelf === 'regulars' ? 0 : settings.mixNew, rng, maxPerTopic: q.shelf ? undefined : 2 };
+  // A dozen or fewer: one per channel and a spread of topics. A long list: let good channels show up two or three times.
+  const big = n > 12;
+  const opts = {
+    n, mixNew: q.shelf === 'regulars' ? 0 : settings.mixNew, rng,
+    maxPerTopic: q.shelf ? undefined : big ? Math.ceil(n / 3) : 3,
+    maxPerChannel: big ? (q.shelf ? 2 : 3) : 1,
+  };
 
   let chosen = pickSet(pool.filter((c) => c.shown < SHOWN_LIMIT).map((c) => scoreVideo(c, now)), opts);
   if (chosen.length < n) chosen = pickSet(pool.map((c) => scoreVideo(c, now)), opts); // dry: bring back the passed-over ones
@@ -85,7 +95,7 @@ async function markShown(db: Db, ids: string[], now: Date): Promise<void> {
 
 export async function getPicks(deps: Deps, q: PickQuery): Promise<{ picks: Pick[]; exhausted: boolean }> {
   const settings = await loadSettings(deps.db);
-  const result = selectPicks(await loadCandidates(deps.db), q, settings, deps.now(), deps.rng);
+  const result = selectPicks(await loadCandidates(deps.db, settings.blockWords), q, settings, deps.now(), deps.rng);
   if (q.count !== false) await markShown(deps.db, result.picks.map((p) => p.id), deps.now());
   return result;
 }
@@ -98,19 +108,22 @@ export type Home = {
   hasKey: boolean;
 };
 
-/** The whole Watch screen in one go: tonight's six, then a row per shelf that has anything in it. */
+export const TONIGHT_COUNT = 12;
+export const SHELF_COUNT = 20;
+
+/** The whole Watch screen in one go: tonight's dozen, then a row of up to 20 per shelf that has anything in it. */
 export async function getHome(deps: Deps, hasKey: boolean): Promise<Home> {
   const { db } = deps;
   const settings = await loadSettings(db);
-  const all = await loadCandidates(db);
+  const all = await loadCandidates(db, settings.blockWords);
   const now = deps.now();
-  const tonight = selectPicks(all, { n: 6 }, settings, now, deps.rng).picks;
+  const tonight = selectPicks(all, { n: TONIGHT_COUNT }, settings, now, deps.rng).picks;
   await markShown(db, tonight.map((p) => p.id), now);
   const onScreen = new Set(tonight.map((p) => p.id));
   const shelves: Home['shelves'] = [];
   const defs = [...settings.topics.map((t) => ({ id: t.id, name: t.name })), { id: 'regulars', name: 'Your regulars' }];
   for (const def of defs) {
-    const picks = selectPicks(all, { shelf: def.id, n: 8, exclude: [...onScreen] }, settings, now, deps.rng).picks;
+    const picks = selectPicks(all, { shelf: def.id, n: SHELF_COUNT, exclude: [...onScreen] }, settings, now, deps.rng).picks;
     if (picks.length === 0) continue;
     for (const p of picks) onScreen.add(p.id);
     shelves.push({ ...def, picks });

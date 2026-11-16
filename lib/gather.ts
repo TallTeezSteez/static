@@ -1,12 +1,15 @@
 import type { Db, Deps, Topic, Video } from './types';
 import { jsonParam, kvGet, kvSet } from './db';
 import { loadSecrets, loadSettings } from './settings';
+import { worthKeepingFromSearch } from './quality';
+import { STARTER_CHANNELS } from './starter';
 import { classify } from './topics';
-import { QuotaError, YouTube } from './youtube';
+import { QuotaError, YouTube, YouTubeError } from './youtube';
 
 export const UPLOADS_STALE_MS = 3 * 3600_000;
 export const SEARCH_STALE_MS = 20 * 3600_000;
-export const MAX_SEARCHES_PER_DAY = 24;
+export const MAX_SEARCHES_PER_DAY = 24; // per run (the name is from when a day had one run)
+export const SEARCH_DAILY_CAP = 72; // across every run in one day; YouTube's own limit is about 100
 const MAX_CHANNELS = 400;
 const CHANNEL_BATCH = 20;
 const SEARCH_WINDOW_DAYS = 21;
@@ -20,31 +23,42 @@ export type GatherResult = {
 
 type Stamp = { at: string };
 
-/** Saves videos into the catalog. Topics are added to, never taken away, so a search topic sticks. */
+/**
+ * Saves videos into the catalog. Topics are added to, never taken away, so a search topic sticks.
+ * A video also gets its channel's shelf (starter channels have one), so it shows there even when
+ * its title has none of the shelf's words.
+ */
 export async function upsertVideos(db: Db, videos: Video[], topics: Topic[], source: 'uploads' | 'search', extraTopic?: Map<string, string>): Promise<void> {
+  const channelIds = [...new Set(videos.map((v) => v.channelId).filter(Boolean))];
+  const channelTopic = new Map<string, string>();
+  if (channelIds.length) {
+    const r = await db.query<{ id: string; topic: string }>('select id, topic from channels where topic is not null and id = any($1)', [channelIds]);
+    for (const row of r.rows) channelTopic.set(row.id, row.topic);
+  }
   for (let i = 0; i < videos.length; i += 300) {
     const rows = videos.slice(i, i + 300).map((v) => {
       const t = new Set(classify(v, topics));
-      const extra = extraTopic?.get(v.id);
-      if (extra) t.add(extra);
+      for (const extra of [extraTopic?.get(v.id), channelTopic.get(v.channelId)]) if (extra) t.add(extra);
       return {
         id: v.id, channel_id: v.channelId, channel_title: v.channelTitle, title: v.title, description: v.description,
         published_at: v.publishedAt, duration_s: v.durationS, views: v.views, category_id: v.categoryId, tags: v.tags,
         embeddable: v.embeddable, live_state: v.liveState, scheduled_start: v.scheduledStart, topics: [...t], source, thumb: v.thumb,
+        made_for_kids: v.madeForKids, lang: v.lang,
       };
     });
     await db.query(
       `insert into videos (id, channel_id, channel_title, title, description, published_at, duration_s, views, category_id, tags,
-                           embeddable, live_state, scheduled_start, topics, source, thumb, fetched_at)
+                           embeddable, live_state, scheduled_start, topics, source, thumb, made_for_kids, lang, fetched_at)
        select x.id, x.channel_id, x.channel_title, x.title, x.description, x.published_at, x.duration_s, x.views, x.category_id, x.tags,
-              x.embeddable, x.live_state, x.scheduled_start, x.topics, x.source, x.thumb, now()
+              x.embeddable, x.live_state, x.scheduled_start, x.topics, x.source, x.thumb, x.made_for_kids, x.lang, now()
        from jsonb_to_recordset($1::jsonb) as x(id text, channel_id text, channel_title text, title text, description text,
               published_at timestamptz, duration_s int, views bigint, category_id text, tags text, embeddable boolean,
-              live_state text, scheduled_start timestamptz, topics text[], source text, thumb text)
+              live_state text, scheduled_start timestamptz, topics text[], source text, thumb text, made_for_kids boolean, lang text)
        on conflict (id) do update set
          title = excluded.title, channel_title = excluded.channel_title, description = excluded.description,
          duration_s = excluded.duration_s, views = excluded.views, embeddable = excluded.embeddable,
          live_state = excluded.live_state, scheduled_start = excluded.scheduled_start, thumb = excluded.thumb,
+         made_for_kids = excluded.made_for_kids, lang = excluded.lang,
          topics = (select coalesce(array_agg(distinct t), '{}') from unnest(videos.topics || excluded.topics) as t),
          fetched_at = now()`,
       [jsonParam(rows)],
@@ -59,8 +73,46 @@ async function unknownIds(db: Db, ids: string[]): Promise<string[]> {
   return ids.filter((id) => !known.has(id));
 }
 
+/**
+ * Looks up starter channels that haven't been looked up yet and adds them, filed under their shelf.
+ * Each handle is asked about once, ever. A channel Wyatt already has keeps everything about it
+ * (hidden stays hidden) and only gains the shelf. Returns how many channels were found this time.
+ */
+export async function addStarterChannels(deps: Deps, yt: YouTube, list = STARTER_CHANNELS): Promise<number> {
+  const { db } = deps;
+  const done = new Set((await kvGet<string[]>(db, 'starter:handles')) || []);
+  const todo = list.filter((s) => !done.has(s.handle.toLowerCase()));
+  if (todo.length === 0) return 0;
+  let added = 0;
+  let quota = false;
+  for (let i = 0; i < todo.length && !quota; i += CHANNEL_BATCH) {
+    const batch = todo.slice(i, i + CHANNEL_BATCH);
+    const results = await Promise.allSettled(batch.map((s) => yt.resolveChannel('@' + s.handle)));
+    const found: { id: string; title: string; topic: string }[] = [];
+    results.forEach((r, j) => {
+      const gone = r.status === 'rejected' && r.reason instanceof YouTubeError && (r.reason.status === 404 || r.reason.status === 400);
+      if (r.status === 'fulfilled' || gone) done.add(batch[j].handle.toLowerCase()); // answered, found or not: don't ask again
+      if (r.status === 'fulfilled' && r.value) found.push({ ...r.value, topic: batch[j].topic });
+      if (r.status === 'rejected' && r.reason instanceof QuotaError) quota = true;
+    });
+    if (found.length) {
+      await db.query(
+        `insert into channels (id, title, source, topic) select x.id, x.title, 'default', x.topic
+         from jsonb_to_recordset($1::jsonb) as x(id text, title text, topic text)
+         on conflict (id) do update set topic = coalesce(channels.topic, excluded.topic)`,
+        [jsonParam(found)]);
+      added += found.length;
+    }
+    await kvSet(db, 'starter:handles', [...done]);
+  }
+  if (quota) throw new QuotaError();
+  return added;
+}
+
 async function gatherUploads(deps: Deps, yt: YouTube, topics: Topic[]): Promise<{ channels: number; videos: number; error?: string }> {
   const { db } = deps;
+  let error: string | undefined;
+  try { await addStarterChannels(deps, yt); } catch (e) { if (e instanceof QuotaError) error = e.message; /* anything else: try again next run */ }
   const chans = await db.query<{ id: string }>(
     `select id from channels
      where not hidden and rating > -3
@@ -70,7 +122,6 @@ async function gatherUploads(deps: Deps, yt: YouTube, topics: Topic[]): Promise<
   );
   const ids: string[] = [];
   let done = 0;
-  let error: string | undefined;
   for (let i = 0; i < chans.rows.length && !error; i += CHANNEL_BATCH) {
     const batch = chans.rows.slice(i, i + CHANNEL_BATCH);
     const results = await Promise.allSettled(batch.map((c) => yt.channelUploads(c.id)));
@@ -109,36 +160,54 @@ export function searchPlan(topics: Topic[], now: Date): { topic: Topic; q: strin
   return Array.from({ length: MAX_SEARCHES_PER_DAY }, (_, i) => all[(start + i) % all.length]);
 }
 
-async function gatherSearch(deps: Deps, yt: YouTube, topics: Topic[]): Promise<{ queries: number; videos: number; error?: string }> {
+/** The date in California, which is where and when YouTube's daily allowance starts over. */
+function quotaDay(now: Date): string {
+  return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Los_Angeles', year: 'numeric', month: '2-digit', day: '2-digit' }).format(now);
+}
+
+type SearchDay = { day: string; n: number };
+
+async function gatherSearch(deps: Deps, yt: YouTube, topics: Topic[], blockWords: string[]): Promise<{ queries: number; videos: number; error?: string; skipped?: string }> {
   const { db } = deps;
   const now = deps.now();
+  const day = quotaDay(now);
+  const saved0 = await kvGet<SearchDay>(db, 'search:day');
+  const usedToday = saved0 && saved0.day === day ? saved0.n : 0;
+  const plan = searchPlan(topics, now).slice(0, Math.max(0, SEARCH_DAILY_CAP - usedToday));
+  if (plan.length === 0) return { queries: 0, videos: 0, skipped: 'search-limit' };
+
   const after = new Date(now.getTime() - SEARCH_WINDOW_DAYS * 86400_000);
   const found = new Map<string, string>();
   let queries = 0;
+  let attempted = 0;
   let saved = 0;
   let error: string | undefined;
-  try {
-    const plan = searchPlan(topics, now);
-    for (let i = 0; i < plan.length; i += 4) { // four at a time keeps the whole run well inside a minute
-      const chunk = plan.slice(i, i + 4);
-      const results = await Promise.allSettled(chunk.map(({ topic, q }) =>
-        yt.search(q, { publishedAfter: after, duration: topic.minMinutes >= 20 ? 'long' : 'medium' })));
-      let failure: unknown;
-      results.forEach((r, j) => {
-        if (r.status === 'rejected') { failure = failure || r.reason; return; }
-        queries += 1;
-        for (const id of r.value) if (!found.has(id)) found.set(id, chunk[j].topic.id);
-      });
-      if (failure) throw failure;
-    }
-  } catch (e) {
-    if (!(e instanceof QuotaError)) throw e;
-    error = e.message;
+  let outOfQuota = false;
+
+  // Whatever goes wrong part-way, the searches that already answered are kept and saved below.
+  for (let i = 0; i < plan.length && !error; i += 4) { // four at a time keeps the whole run well inside a minute
+    const chunk = plan.slice(i, i + 4);
+    attempted += chunk.length;
+    const results = await Promise.allSettled(chunk.map(({ topic, q }) =>
+      yt.search(q, { publishedAfter: after, duration: topic.minMinutes >= 20 ? 'long' : 'medium' })));
+    results.forEach((r, j) => {
+      if (r.status === 'rejected') {
+        outOfQuota = outOfQuota || r.reason instanceof QuotaError;
+        error = error || (r.reason instanceof Error ? r.reason.message : String(r.reason));
+        return;
+      }
+      queries += 1;
+      for (const id of r.value) if (!found.has(id)) found.set(id, chunk[j].topic.id);
+    });
   }
+  // Count the tries, not the successes: a failed search still came out of the day's allowance.
+  await kvSet(db, 'search:day', { day, n: outOfQuota ? SEARCH_DAILY_CAP : usedToday + attempted } satisfies SearchDay);
+
   try {
     const fresh = await unknownIds(db, [...found.keys()]);
     for (let i = 0; i < fresh.length; i += 50) {
-      const videos = await yt.videoDetails(fresh.slice(i, i + 50));
+      const videos = (await yt.videoDetails(fresh.slice(i, i + 50))).filter((v) => worthKeepingFromSearch(v, blockWords));
+      if (videos.length === 0) continue;
       await upsertVideos(db, videos, topics, 'search', found);
       saved += videos.length;
       const chans = [...new Map(videos.map((v) => [v.channelId, v.channelTitle])).entries()].filter(([id]) => id);
@@ -160,8 +229,7 @@ async function gatherSearch(deps: Deps, yt: YouTube, topics: Topic[]): Promise<{
       );
     }
   } catch (e) {
-    if (!(e instanceof QuotaError)) throw e;
-    error = e.message;
+    error = error || (e instanceof Error ? e.message : String(e));
   }
   return { queries, videos: saved, error };
 }
@@ -179,7 +247,7 @@ export async function runGather(deps: Deps, opts: { force?: boolean; kinds?: ('u
   const secrets = await loadSecrets(db);
   if (!secrets.youtubeKey) return { skipped: ['no-key'] };
   const yt = new YouTube(secrets.youtubeKey, deps.fetch);
-  const { topics } = await loadSettings(db);
+  const { topics, blockWords } = await loadSettings(db);
 
   const jobs: ['uploads' | 'search', string, number][] = [
     ['uploads', 'gather:uploads', UPLOADS_STALE_MS],
@@ -192,8 +260,14 @@ export async function runGather(deps: Deps, opts: { force?: boolean; kinds?: ('u
     let detail: any;
     let error: string | undefined;
     try {
-      if (kind === 'uploads') { const r = await gatherUploads(deps, yt, topics); result.uploads = { channels: r.channels, videos: r.videos }; detail = result.uploads; error = r.error; }
-      else { const r = await gatherSearch(deps, yt, topics); result.search = { queries: r.queries, videos: r.videos }; detail = result.search; error = r.error; }
+      if (kind === 'uploads') {
+        const r = await gatherUploads(deps, yt, topics);
+        result.uploads = { channels: r.channels, videos: r.videos }; detail = result.uploads; error = r.error;
+      } else {
+        const r = await gatherSearch(deps, yt, topics, blockWords);
+        if (r.skipped) { result.skipped.push(r.skipped); continue; } // the day's searches are spent: not a failure, nothing to log
+        result.search = { queries: r.queries, videos: r.videos }; detail = result.search; error = r.error;
+      }
     } catch (e) {
       error = e instanceof Error ? e.message : String(e);
     }

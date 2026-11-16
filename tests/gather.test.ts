@@ -13,7 +13,7 @@ const apiVideo = (id: string, over: any = {}) => ({
     description: 'd', publishedAt: '2026-11-13T00:00:00Z', categoryId: '28', tags: ['one', 'two'], liveBroadcastContent: over.live || 'none',
     thumbnails: { medium: { url: `https://i.ytimg.com/vi/${id}/mqdefault.jpg` } } },
   contentDetails: { duration: over.duration || 'PT25M' },
-  statistics: { viewCount: '1234' },
+  statistics: { viewCount: '12340' },
   status: { embeddable: over.embeddable ?? true },
 });
 const quotaResponse = () => new Response(JSON.stringify({ error: { code: 403, message: 'quota', errors: [{ reason: 'quotaExceeded' }] } }), { status: 403 });
@@ -71,7 +71,7 @@ describe('YouTube client', () => {
     const videos = await new YouTube('KEY', f).videoDetails(ids);
     expect(f.calls).toHaveLength(3);
     expect(videos).toHaveLength(120);
-    expect(videos[0]).toMatchObject({ id: vidId(0), durationS: 1500, views: 1234, embeddable: true, liveState: 'none', tags: 'one, two' });
+    expect(videos[0]).toMatchObject({ id: vidId(0), durationS: 1500, views: 12340, embeddable: true, liveState: 'none', tags: 'one, two' });
   });
   it('raises QuotaError when the daily limit is hit', async () => {
     const f = fakeFetch([['/videos', quotaResponse]]);

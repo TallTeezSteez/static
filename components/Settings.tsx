@@ -157,6 +157,7 @@ function TopicCard({ topic, onSave, onRemove }: { topic: Topic; onSave: (t: Topi
 function Picks({ s, save }: { s: SettingsData; save: SaveFn }) {
   const [mix, setMix] = useState(Math.round(s.mixNew * 100));
   const [name, setName] = useState('');
+  const [blocked, setBlocked] = useState(s.blockWords.join(', '));
   const setTopic = (i: number, t: Topic | null) => save({ topics: t ? s.topics.map((x, j) => (j === i ? t : x)) : s.topics.filter((_, j) => j !== i) });
   return (
     <>
@@ -169,6 +170,10 @@ function Picks({ s, save }: { s: SettingsData; save: SaveFn }) {
         <label>Play the next pick <div className="hint">When a video ends, the next one in the row starts.</div></label>
         <label className="toggle"><input type="checkbox" checked={s.autoplay} onChange={(e) => save({ autoplay: e.target.checked })} /><span /></label>
       </div>
+      <h4>Never show videos with these words</h4>
+      <p className="muted">In the title or the channel name. Commas between. Videos made for kids and videos not in English are always left out.</p>
+      <textarea value={blocked} onChange={(e) => setBlocked(e.target.value)} style={{ minHeight: 110 }}
+        onBlur={() => save({ blockWords: blocked.split(',').map((w) => w.trim()).filter(Boolean) })} />
       <h4>Shelves</h4>
       {s.topics.map((t, i) => <TopicCard key={t.id} topic={t} onSave={(next) => setTopic(i, next)} onRemove={() => setTopic(i, null)} />)}
       <div className="inline">
@@ -222,7 +227,9 @@ function Sources({ has, saveSecrets, toast, onDataChanged }: { has: SettingsBund
     setBusy('gather');
     try {
       const r = await post<any>('/api/refresh', { force: true, only: 'videos' });
-      toast(r.gather?.error || (r.gather?.skipped?.includes('no-key') ? 'Add your YouTube key first.' : `Found ${(r.gather?.uploads?.videos || 0) + (r.gather?.search?.videos || 0)} new videos`));
+      const limit = r.gather?.skipped?.includes('search-limit') || /limit|quota/i.test(r.gather?.error || '');
+      const found = (r.gather?.uploads?.videos || 0) + (r.gather?.search?.videos || 0);
+      toast(r.gather?.skipped?.includes('no-key') ? 'Add your YouTube key first.' : limit ? `Found ${found} new videos. Today's YouTube searches are used up; they run again tomorrow.` : r.gather?.error || `Found ${found} new videos`);
       onDataChanged(); loadLog();
     } catch (e) { toast((e as Error).message); }
     setBusy('');

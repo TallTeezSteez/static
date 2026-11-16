@@ -16,6 +16,8 @@ export default function Watch({ actions, version, openSettings }: Props) {
   const [time, setTime] = useState<TimeBucket | ''>('');
   const [busy, setBusy] = useState('');
   const [dry, setDry] = useState(false);
+  const [browse, setBrowse] = useState<Pick[]>([]); // the long "keep browsing" grid under the shelves
+  const [browseDone, setBrowseDone] = useState(false);
   const shown = useRef<Set<string>>(new Set()); // everything put on screen this visit, so a reroll never repeats
 
   const remember = (picks: Pick[]) => picks.forEach((p) => shown.current.add(p.id));
@@ -26,6 +28,8 @@ export default function Watch({ actions, version, openSettings }: Props) {
       remember(h.tonight);
       h.shelves.forEach((s) => remember(s.picks));
       setHome(h);
+      setBrowse([]);
+      setBrowseDone(false);
       setError('');
     } catch (e) {
       setError((e as Error).message);
@@ -40,6 +44,7 @@ export default function Watch({ actions, version, openSettings }: Props) {
       const { id, channelId } = (e as CustomEvent).detail as { id: string; channelId?: string };
       const keep = (p: Pick) => p.id !== id && (!channelId || p.channelId !== channelId);
       setHome((h) => h && { ...h, tonight: h.tonight.filter(keep), shelves: h.shelves.map((s) => ({ ...s, picks: s.picks.filter(keep) })) });
+      setBrowse((b) => b.filter(keep));
     };
     window.addEventListener('static:gone', onGone);
     return () => window.removeEventListener('static:gone', onGone);
@@ -49,7 +54,7 @@ export default function Watch({ actions, version, openSettings }: Props) {
     const qs = new URLSearchParams({ n: String(n) });
     if (shelf) qs.set('shelf', shelf);
     if (bucket) qs.set('time', bucket);
-    const exclude = [...shown.current].slice(-380);
+    const exclude = [...shown.current].slice(-580);
     if (exclude.length) qs.set('exclude', exclude.join(','));
     let r = await get<{ picks: Pick[]; exhausted: boolean }>(`/api/picks?${qs}`);
     if (r.picks.length === 0 && exclude.length) {
@@ -66,7 +71,7 @@ export default function Watch({ actions, version, openSettings }: Props) {
   async function reroll(bucket: TimeBucket | '' = time) {
     setBusy('tonight');
     try {
-      const picks = await fetchPicks(null, 6, bucket);
+      const picks = await fetchPicks(null, 12, bucket);
       setDry(picks.length === 0);
       setHome((h) => h && { ...h, tonight: picks });
     } catch (e) { actions.toast((e as Error).message); }
@@ -76,20 +81,42 @@ export default function Watch({ actions, version, openSettings }: Props) {
   async function more(shelfId: string) {
     setBusy(shelfId);
     try {
-      const picks = await fetchPicks(shelfId, 8, '');
+      const picks = await fetchPicks(shelfId, 20, '');
       if (picks.length) setHome((h) => h && { ...h, shelves: h.shelves.map((s) => (s.id === shelfId ? { ...s, picks } : s)) });
       else actions.toast('Nothing else on this shelf right now.');
     } catch (e) { actions.toast((e as Error).message); }
     setBusy('');
   }
 
+  /** Adds another 48 to the long grid. Unlike Reroll it never starts over: when there's nothing new left, it says so. */
+  async function showMore() {
+    setBusy('browse');
+    try {
+      const qs = new URLSearchParams({ n: '48' });
+      const exclude = [...shown.current].slice(-580);
+      if (exclude.length) qs.set('exclude', exclude.join(','));
+      const r = await get<{ picks: Pick[]; exhausted: boolean }>(`/api/picks?${qs}`);
+      remember(r.picks);
+      setBrowse((b) => [...b, ...r.picks]);
+      if (r.exhausted) setBrowseDone(true);
+    } catch (e) { actions.toast((e as Error).message); }
+    setBusy('');
+  }
+
+  function gatherMessage(r: any): string {
+    const found = (r.gather?.uploads?.videos || 0) + (r.gather?.search?.videos || 0);
+    if (r.gather?.skipped?.includes('no-key')) return 'Add your YouTube key first.';
+    const limit = r.gather?.skipped?.includes('search-limit') || /limit|quota/i.test(r.gather?.error || '');
+    if (limit) return `Found ${found} new videos from your channels. YouTube's search limit for today is used up, so new-channel searches run again tomorrow.`;
+    if (r.gather?.error) return r.gather.error;
+    return `Found ${found} new videos`;
+  }
+
   async function gatherNow() {
     setBusy('gather');
     try {
       const r = await post<any>('/api/refresh', { force: true, only: 'videos' });
-      if (r.gather?.error) actions.toast(r.gather.error);
-      else if (r.gather?.skipped?.includes('no-key')) actions.toast('Add your YouTube key first.');
-      else actions.toast(`Found ${(r.gather?.uploads?.videos || 0) + (r.gather?.search?.videos || 0)} new videos`);
+      actions.toast(gatherMessage(r));
       await load();
     } catch (e) { actions.toast((e as Error).message); }
     setBusy('');
@@ -171,6 +198,18 @@ export default function Watch({ actions, version, openSettings }: Props) {
               </div>
             </section>
           ))}
+
+          <section>
+            <div className="rowhead"><h2>Keep browsing</h2></div>
+            {browse.length > 0 && (
+              <div className="grid">{browse.map((p) => <PickCard key={p.id} pick={p} queue={browse} actions={actions} />)}</div>
+            )}
+            <div className="rowhead">
+              {browseDone
+                ? <span className="muted">That&apos;s everything for now. New videos come in every morning.</span>
+                : <button className="btn" onClick={showMore} disabled={busy === 'browse'}>{busy === 'browse' ? <span className="spinner" /> : null} {browse.length ? 'Show 48 more' : 'Show 48 more videos'}</button>}
+            </div>
+          </section>
 
           <div className="rowhead">
             <span className="muted">
