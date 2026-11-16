@@ -1,6 +1,6 @@
 import { randomBytes } from 'node:crypto';
 import type { Db, Deps, Secrets } from './types';
-import { kvGet, kvSet } from './db';
+import { jsonParam, kvGet, kvSet } from './db';
 import { loadSecrets } from './settings';
 
 export type TwitchStream = { login: string; name: string; title: string; game: string; viewers: number; startedAt: string; thumb: string };
@@ -112,7 +112,7 @@ export async function importFollows(deps: Deps, origin: string, code: string, st
     await deps.db.query(
       `insert into twitch_channels (login, display_name, source) select x.login, x.name, 'follows'
        from jsonb_to_recordset($1::jsonb) as x(login text, name text) on conflict (login) do nothing`,
-      [JSON.stringify(follows)]);
+      [jsonParam(follows)]);
   }
   return follows.length;
 }
