@@ -3,7 +3,7 @@ import { jsonParam, kvGet, kvSet } from './db';
 import { loadSecrets, loadSettings } from './settings';
 import { worthKeepingFromSearch } from './quality';
 import { STARTER_CHANNELS } from './starter';
-import { classify } from './topics';
+import { CLASSIFY_VERSION, classify } from './topics';
 import { QuotaError, YouTube, YouTubeError } from './youtube';
 
 export const UPLOADS_STALE_MS = 3 * 3600_000;
@@ -63,6 +63,26 @@ export async function upsertVideos(db: Db, videos: Video[], topics: Topic[], sou
          fetched_at = now()`,
       [jsonParam(rows)],
     );
+  }
+}
+
+/**
+ * Files every video again under the current rules. Videos a search found keep their shelves, because the
+ * search that found them is the only record of why they belong there.
+ */
+export async function reclassifyCatalog(db: Db, topics: Topic[]): Promise<void> {
+  const r = await db.query<any>(
+    `select v.id, v.title, v.channel_title, v.category_id, v.duration_s, c.topic as channel_topic
+     from videos v left join channels c on c.id = v.channel_id where v.source <> 'search'`);
+  const rows = r.rows.map((x) => {
+    const t = new Set(classify({ title: x.title, channelTitle: x.channel_title, tags: '', description: '', categoryId: x.category_id, durationS: Number(x.duration_s) }, topics));
+    if (x.channel_topic) t.add(x.channel_topic);
+    return { id: x.id, topics: [...t] };
+  });
+  for (let i = 0; i < rows.length; i += 1000) {
+    await db.query(
+      `update videos v set topics = x.topics from jsonb_to_recordset($1::jsonb) as x(id text, topics text[]) where v.id = x.id`,
+      [jsonParam(rows.slice(i, i + 1000))]);
   }
 }
 
@@ -248,6 +268,10 @@ export async function runGather(deps: Deps, opts: { force?: boolean; kinds?: ('u
   if (!secrets.youtubeKey) return { skipped: ['no-key'] };
   const yt = new YouTube(secrets.youtubeKey, deps.fetch);
   const { topics, blockWords } = await loadSettings(db);
+  if ((await kvGet<number>(db, 'classify:version')) !== CLASSIFY_VERSION) {
+    await reclassifyCatalog(db, topics);
+    await kvSet(db, 'classify:version', CLASSIFY_VERSION);
+  }
 
   const jobs: ['uploads' | 'search', string, number][] = [
     ['uploads', 'gather:uploads', UPLOADS_STALE_MS],

@@ -1,7 +1,7 @@
 import type { Db, Deps, Pick, Settings, TimeBucket } from './types';
 import { loadSettings } from './settings';
 import { pickSet, scoreVideo, type Candidate, type Scored } from './score';
-import { MIN_SECONDS, isJunk } from './quality';
+import { MAX_SECONDS, MIN_SECONDS, isJunk } from './quality';
 
 export { MIN_SECONDS };
 const SHOWN_LIMIT = 5; // shown this many times without a click: stop offering it (unless the pool runs dry)
@@ -26,7 +26,7 @@ export async function loadCandidates(db: Db, blockWords: string[]): Promise<Cand
      from videos v
      left join channels c on c.id = v.channel_id
      left join vstate s on s.video_id = v.id
-     where v.duration_s >= ${MIN_SECONDS} and v.live_state = 'none'
+     where v.duration_s >= ${MIN_SECONDS} and v.duration_s <= ${MAX_SECONDS} and v.live_state = 'none'
        and not exists (select 1 from seen where seen.video_id = v.id)
        and coalesce(s.skipped, false) = false and coalesce(s.vote, 0) >= 0
        and coalesce(c.hidden, false) = false

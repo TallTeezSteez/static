@@ -2,6 +2,7 @@ import type { Video } from './types';
 
 export const MIN_SEARCH_VIEWS = 2000; // a search result nobody watched isn't worth a seat
 export const MIN_SECONDS = 180; // nothing shorter is ever picked: no Shorts
+export const MAX_SECONDS = 4 * 3600; // nothing longer either: past four hours it's an all-day stream replay
 
 /** Words and phrases that mark the stuff Wyatt doesn't want. He can change the list in Settings > Picks. */
 export const DEFAULT_BLOCK_WORDS = [
@@ -10,6 +11,7 @@ export const DEFAULT_BLOCK_WORDS = [
   'last to leave', '$1 vs', 'vs $1', 'asmr', 'mukbang', 'storytime', 'grwm', 'vlog', 'vlogs', 'vlogmas',
   'kai cenat', 'ishowspeed', 'sidemen', 'jake paul', 'logan paul', 'adin ross', 'among us', 'brawl stars',
   'fnaf', 'gacha', 'diss track', 'try not to laugh', 'memes', 'meme compilation', 'cringe', 'anime', 'kpop', 'k-pop',
+  'play by play', 'watch party', 'livestream', 'live stream',
 ];
 
 const escapeRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
